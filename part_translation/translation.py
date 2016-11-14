@@ -5,6 +5,8 @@ import jaconv
 import networkx as nx
 import matplotlib.pyplot as plt
 
+word_importantance = 0.7
+
 def grep_corpus(str):
     filename = "./data/parallel.txt"
     ld = open(filename)
@@ -38,6 +40,7 @@ def split_word(list):
         result.append(words)
         words = []
         #print jaconv.kata2hira(result.decode('utf-8')).encode('utf-8')
+    #print result
     return result
 
 # @param list array[][]
@@ -59,13 +62,13 @@ def joint_word(list):
     # 重要度の算出
     for k,v in req.items():
         score = float(v)/float(word_num)
-        if score > 0.07:
+        if score > word_importantance:
             result.append(k)
 
     return result
 
 # @param list array[][]
-def create_word_graph(list):
+def create_word_graph(list, sentence):
     # 重要単語の抽出
     j_words = joint_word(list)
     word_list = list
@@ -82,43 +85,127 @@ def create_word_graph(list):
                 num += 1
 
     # add nodes
+    graph.add_node("start")
+    graph.add_node("end")
     for i in range(len(word_list)):
         graph.add_nodes_from(word_list[i])
     
-    # 重要エッジスコアの計算
-    edges_weight = calc_weight(word_list)
+    # エッジの重みの取得
+    edges_weight = calc_weight(word_list, sentence)
+    print "calc weight....."
 
     # add edge
     for i in range(len(edges_weight)):
-        graph.add_edge(edges_weight[i][0], edges_weight[i][1], weight=edges_weight[2])
-    print graph.edges(data=True)
-
-    #for i in range(len(word_list)):
-    #    for j in range(len(word_list[i])-1):
-    #        graph.add_edge(word_list[i][j], word_list[i][j+1], weight=0.0)
-            #print "("+word_list[i][j]+","+word_list[i][j+1]+")"
+        graph.add_edge(edges_weight[i][0], edges_weight[i][1], weight=edges_weight[i][2])
     #print graph.edges(data=True)
 
     return graph
 
 # return [(a, b, weight),(a, b, weight)]
-def calc_weight(list):
+def calc_weight(list, sentence):
     edges_weight = []
     edge_sum = {}
+    src_id_filename = "./data/giza/116-11-14.011307.aynishim.trn.src.vcb"
+    trg_id_filename = "./data/giza/116-11-14.011307.aynishim.trn.trg.vcb"
+    prob_data_filename = "./data/giza/116-11-14.011307.aynishim.t3.final"
+    src_arr = sentence.split(" ")
+    src_ids = {}
+    trg_ids = {}
+    prob_datas = {}
+    
+    # データからidと単語をk-vで持つようにする
+        # 原語のデータ
+    ld = open(src_id_filename)
+    lines = ld.readlines()
+    ld.close()
+
+    for line in lines:
+        arr = line.split(" ")
+        src_ids[arr[1]] = src_ids.get(arr[1], arr[0])
+
+        # 日本語のデータ
+    ld = open(trg_id_filename)
+    lines = ld.readlines()
+    ld.close()
+
+    for line in lines:
+        arr = line.split(" ")
+        trg_ids[arr[1]] = trg_ids.get(arr[1], arr[0])
+
+        # 確率のデータ
+    ld = open(prob_data_filename)
+    lines = ld.readlines()
+    ld.close()
+
+    for line in lines:
+        arr = line.split(" ")
+        key = arr[0]+" "+arr[1]
+        prob_datas[key] = prob_datas.get(key, arr[2])
+
+    # 入力文の単語をIDに変換
+    for i in range(len(src_arr)):
+        src_arr[i] = (src_ids[src_arr[i]], src_arr[i])
+        
+    #print src_arr
 
     for i in range(len(word_list)):
+        word_list[i].insert(0, "start")
+        word_list[i].append("end")
         for j in range(len(word_list[i])-1):
+            # 重要エッジスコアを得るために、頻出度を数える
             name = word_list[i][j]+","+word_list[i][j+1]
+            #print word_list[i][j]+","+word_list[i][j+1]
             edge_sum[name] = edge_sum.get(name, 0) + 1
 
     for k,v in edge_sum.items():
         arr = k.split(",")
-        edges_weight.append((arr[0], arr[1], float(v)/float(len(edge_sum))))
+
+        # j+1の単語が原語から訳される最も高い確率を調べる
+        # 単語対応確率スコアの計算 / 存在しない場合は0とする
+        prob = 0.0
+        for i in range(len(src_arr)):
+            # 後ノードの日本語が辞書に存在するなら
+            if arr[1] in trg_ids:
+                key = trg_ids[arr[1]] +" "+ src_arr[i][0]
+                # 日本語と英語の組み合わせが存在し、且つ、今までの確率より大きいなら
+                if key in prob_datas:
+                    #if prob_datas[key] > prob:
+                    if round(float(prob)-float(prob_datas[key]), 10) < 0:
+                        print arr[1], src_arr[i][1]
+                        prob = prob_datas[key]
+                        #print key
+                        #print prob
+
+        # 重要エッジスコアの計算
+        edge_score = float(v)/float(len(edge_sum))
+
+        #重みの計算
+        lamda = 0.5
+        edge_weight = 1.0 - (lamda*edge_score + (1.0-lamda)*float(prob))
+        edges_weight.append((arr[0], arr[1], edge_weight))
         
-        #print k, str(float(v)/float(len(edge_sum)))
+        #print edge_weight
 
     return edges_weight
 
+def reranking(graph):
+    word_graph = graph
+    # 経路を全て取得し、短い順にソートする
+    paths = sorted(nx.all_simple_paths(word_graph, source='start', target='end'), key=len)
+    # 重みを計算してリランキング
+    print "starting reranking....."
+    datas = []
+    for path in paths[:15]:
+        weight = 0.0
+        #print len(path)
+        for i in range(len(path)-1):
+            source, target = path[i], path[i+1]
+            edge = word_graph[source][target]
+            weight += edge['weight']
+        datas.append((path, float(weight)/float(len(path))))
+        #print('{}: {}'.format(path, float(weight)/float(len(path))))
+    datas.sort(key=lambda tup: tup[1])
+    return datas[0][0]
 
 def draw_graph(graph):
     nx.draw(graph)
@@ -126,12 +213,26 @@ def draw_graph(graph):
 
 
 if __name__ == '__main__':
-    sentence = "I dreamed a excellent dream."
-    part_str = "I dreamed"
-    grep_list = grep_corpus(part_str)
+    #sentence = "I dreamed a excellent dream."
+    #part_str = "I dreamed"
+    num = 5
+    lyrics = [
+        ("I dreamed a excellent dream.", "I dreamed"),
+        ("Soon you will die, And my memory will hide you!", "you will die"),
+        ("Long as you live, I will still be here", "still be here"),
+        ("It's over now I know inside No one must ever know", "It's over"),
+        ("Do you think, That I'd ever set you free", "set you free"),
+        ("Where does this feeling Of power derive", "this feeling")
+    ]
+
+    grep_list = grep_corpus(lyrics[num][1])
+    print "grep word list....."
     word_list = split_word(grep_list)
-    word_list[0].append("夢を")
-    word_list[0].append("見たの")
-    word_graph = create_word_graph(word_list)
-    #draw_graph(word_graph)
+    print "create word list....."
+    word_graph = create_word_graph(word_list, lyrics[num][0])
+    print "create graph....."
+    path = reranking(word_graph)
+
+    print "".join(path[1:-1])
     
+    #draw_graph(word_graph)

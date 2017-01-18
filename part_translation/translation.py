@@ -19,7 +19,7 @@ def grep_corpus(str):
         if line.find(str) >= 0:
             arr = line[:-1].split("\t")
             result.append(arr[0].replace("、","").replace("。",""))
-            print line[:-1]
+            #print line[:-1]
 
     return result
 
@@ -290,12 +290,15 @@ if __name__ == '__main__':
     #sentence = "I dreamed a excellent dream."
     #part_str = "I dreamed"
     lyrics = [
-        ("I dreamed a excellent dream.", "I dreamed"),
-        ("Soon you will die, And my memory will hide you!", "my memory"),
-        ("Long as you live, I will still be here", "still be here"),
-        ("It's over now I know inside No one must ever know", "It's over"),
-        ("Do you think, That I'd ever set you free", "set you free"),
-        ("Where does this feeling of power derive", "this feeling")
+        #("I dreamed that love would never die", "I dreamed"),
+        #("How can I live when we are parted", "How can I"),
+        ("This man could be my chance", "my chance")
+        #("I dreamed a excellent dream.", "I dreamed"),
+        #("Soon you will die, And my memory will hide you!", "my memory"),
+        #("Long as you live, I will still be here", "still be here"),
+        #("It's over now I know inside No one must ever know", "It's over"),
+        #("Do you think, That I'd ever set you free", "set you free"),
+        #("Where does this feeling of power derive", "this feeling")
     ]
 
     result = []

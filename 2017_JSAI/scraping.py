@@ -65,4 +65,4 @@ def create_lyrics_corpus():
 
 if __name__ == '__main__':
     create_url_list()
-    #create_lyrics_corpus()
+    create_lyrics_corpus()

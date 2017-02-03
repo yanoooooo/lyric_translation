@@ -5,6 +5,7 @@ import nltk
 import MeCab
 import jaconv
 import difflib
+import re
 
 """
 # ファイルからbigramを読み込んでそのリストを返す
@@ -63,19 +64,32 @@ def kanji2katakana(sentence):
     return result
 
 """
-# 与えられたカタカナの文章のモーラ数を返す
+# 与えられたカタカナの文章のモーラ数と、モーラ毎に区切ったリストを返す
 # 促音や撥音の処理もここで
-@return int
+@return int, arr[]
 """
 def count_mora(sentence):
-    lst = ["ッ", "ャ", "ュ", "ョ", "ン"]
+    lst = ["ッ", "ャ", "ュ", "ョ", "ン", "ァ", "ィ", "ゥ", "ェ", "ォ"]
     result = len(sentence)/3
+    mora_list = []
+    t = unicode(sentence.decode('utf-8'))
 
-    for a in lst:
-        if a in sentence:
-            result = result - 1
+    # モーラ数を数える
+    for num in range(0, len(t)):
+        for a in lst:
+            if a in t[num].encode("utf-8"):
+                result = result - 1
 
-    return result
+    mora_num = 0
+    # モーラリストを作る
+    for a in range(0, len(t)):
+        if t[a].encode("utf-8") in lst:
+            mora_list[mora_num-1] = mora_list[mora_num-1]+t[a]
+        else:
+            mora_list.append(t[a])
+            mora_num = mora_num + 1
+
+    return result, mora_list
 
 """
 # 与えられた漢字混じりの文章のらしさを求める
@@ -91,12 +105,57 @@ def judge_research(t):
         return False
 
 """
+# 与えられたテキストとモーラ・音節の一致度を求める
+@return True / False
+"""
+def match_text_vowel(txt, vowel):
+    vowel_trim = {
+        "a":"ア.*|カ.*|サ.*|タ.*|ナ.*|ハ.*|マ.*|ヤ.*|ラ.*|ワ.*|ガ.*|ザ.*|ダ.*|バ.*|パ.*",
+        "i":"イ.*|キ.*|シ.*|チ.*|ニ.*|ヒ.*|ミ.*|リ.*|ギ.*|ジ.*|ヂ.*|ビ.*|ピ.*",
+        "u":"ウ.*|ク.*|ス.*|ツ.*|ヌ.*|フ.*|ム.*|ユ.*|ル.*|グ.*|ズ.*|ヅ.*|ブ.*|プ.*",
+        "e":"エ.*|ケ.*|セ.*|テ.*|ネ.*|ヘ.*|メ.*|レ.*|ゲ.*|デ.*|ゼ.*|ベ.*|ペ.*",
+        "o":"オ.*|コ.*|ソ.*|ト.*|ノ.*|ホ.*|モ.*|ヨ.*|ロ.*|ヲ.*|ゴ.*|ゾ.*|ド.*|ボ.*|ポ.*"
+    }
+    lowcase_trim = {
+        "a":".+ァ|.+ャ",
+        "i":".+ィ",
+        "u":".+ゥ|.+ュ",
+        "e":".+ェ",
+        "o":".+ォ|.+ョ"
+    }
+    # TODO 小文字やンが使われていたら、1モーラとしないといけない／(^o^)＼
+    t = unicode(txt.decode('utf-8'))
+    for v in vowel:
+        trim = vowel_trim[v[0]]
+        l_trim = lowcase_trim[v[0]]
+        #print len(t), int(v[1]), t
+        if len(t) >= int(v[1]):
+            mora_num, mora_list = count_mora(txt)
+            if len(t) == mora_num:
+                # 与えられたtextの文字数とモーラ数が一致
+                # 拗音と促音、撥音を含まないと判断
+                if not re.match(trim, t[v[1]-1].encode("utf-8")):
+                    return False
+            else:
+                # モーラ数が指定されたモーラ位置より多ければ実行
+                #print mora_num, v[1]-1, mora_list[0]
+                if mora_num > v[1]-1:
+                    # 拗音 / 促音 / 撥音を含む場合
+                    # 拗音
+                    if not re.match(l_trim, mora_list[v[1]-1].encode("utf-8")):
+                        # 促音と撥音
+                        if not re.match(trim, mora_list[v[1]-1].encode("utf-8")):
+                            return False
+    return True
+
+
+"""
 # 与えられたモーラから、候補文がモーラ数と同等か以下かを判定する
 # 同等のモーラと、数以下のモーラのリストを返す
 TODO 動的計画法
 @return result[], search[]
 """
-def search_candidate_from_mora(candidate, mora):
+def search_candidate_from_mora(candidate, mora, vowel):
     result = []
     search = []
     threadshold = 0.0001
@@ -111,8 +170,12 @@ def search_candidate_from_mora(candidate, mora):
         if katakana == False:
             continue
 
+        # 生成したテキストと指定母音と場所が一致しているか
+        if match_text_vowel(katakana, vowel) == False:
+            continue
+
         #カタカナのモーラ数を判定する
-        mora_num = count_mora(katakana)
+        mora_num, mora_list = count_mora(katakana)
         
         # mora数ピッタリなら結果の配列へ
         # 最後の文字が「ッ」の場合は言葉として不成立
@@ -142,7 +205,7 @@ def create_candidate_list(bigrams, word, mora, vowel):
     candidate = search_bigram(bigrams, word)
 
     # モーラ数を調べ、結果と再検索のリストを作成
-    result, search = search_candidate_from_mora(candidate, mora)
+    result, search = search_candidate_from_mora(candidate, mora, vowel)
     
     num = 1
     for a in search:
@@ -158,7 +221,7 @@ def create_candidate_list(bigrams, word, mora, vowel):
             re_candidate.append((b[0], b[1], a[2]+b[1], float(a[3])*float(b[3])))
             #print("tuple(%s, %s, %s)") %(b[0], b[1], a[2]+b[1])
             #print a[2]+b[1]
-        re_result, re_search = search_candidate_from_mora(re_candidate, mora)
+        re_result, re_search = search_candidate_from_mora(re_candidate, mora, vowel)
         result.extend(re_result)
         search.extend(re_search)
         print "loop: %d, resutl_length: %d, search_length: %d" % (num, len(result), len(search))
@@ -166,7 +229,7 @@ def create_candidate_list(bigrams, word, mora, vowel):
 
     return result
 
-if __name__ == '__main__':
+def create_lyrics():
     # タプル(英語歌詞、機械翻訳文, モーラ数と音節)
     lyrics = [
         ("Raindrops on roses and, whiskers on kittens", "バラに滴る雨滴,子猫のヒゲ", [6, 5]),
@@ -188,7 +251,7 @@ if __name__ == '__main__':
     # 候補となる単語を渡し、モーラを指定し、モーラと一致する歌詞候補のリストを生成
     # TODO 助詞がない歌詞っぽい文章も作れるようにする
     # TODO 母音の指定
-    vowel = [("あ", 1), ("お", 3)]
+    vowel = [("o", 3),("a", 5)]
     print "creating candidate list...."
     candidate_list = create_candidate_list(bigrams, "バラ", 5, vowel)
 
@@ -203,3 +266,13 @@ if __name__ == '__main__':
             #print a[2]+b[2]
         print a[2], a[3]
     print "%d candidate" % len(candidate_list)
+
+
+if __name__ == '__main__':
+    # 楽曲解析
+
+    # 歌詞の作成
+    create_lyrics()
+    #vowel = [("a", 2), ("u", 3)]
+    #match_text_vowel("ヴァラシュディン", vowel)
+    

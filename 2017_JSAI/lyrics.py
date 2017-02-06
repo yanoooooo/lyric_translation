@@ -6,6 +6,7 @@ import MeCab
 import jaconv
 import difflib
 import re
+from gensim.models import word2vec
 
 """
 # ファイルからbigramを読み込んでそのリストを返す
@@ -97,7 +98,7 @@ tuple(word1, word2, sentence, prob)
 @return True / False
 """
 def judge_research(t):
-    threadshold = 0.001
+    threadshold = 0.00004
     #print "judge: %s, %f" % (t[2], float(t[3]))
     if float(t[3]) > threadshold:
         return True
@@ -158,7 +159,7 @@ TODO 動的計画法
 def search_candidate_from_mora(candidate, mora, vowel):
     result = []
     search = []
-    threadshold = 0.0001
+    threadshold = 0.00004
 
     for a in candidate:
         # 与えられたbi-gramの候補(漢字混じり)がモーラ数より大きければその時点で次に行く
@@ -229,6 +230,68 @@ def create_candidate_list(bigrams, word, mora, vowel):
 
     return result
 
+"""
+# 渡された機械翻訳文と生成された歌詞の単語のベクトル距離を計算して返す
+@param lyrics arr[(word1, word2, lyrics, prob)]
+@return arr[(word1, word2, lyrics, prob, dist)]
+"""
+def mean_cos_similarity(model, translation, lyrics_arr):
+    result = []
+    # 機械翻訳文から名詞と動詞の原形を抜き出す
+    mt = MeCab.Tagger(' -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd')
+    res = mt.parseToNode(translation)
+
+    translation_words = []
+    while res:
+        ft = res.feature.split(",")
+        if ft[0] == "名詞" or ft[0] == "動詞":
+            translation_words.append(ft[6])
+        res = res.next
+
+    # 渡された歌詞の全てを調べる
+    for lyrics in lyrics_arr:
+        # 歌詞から名詞と動詞の原形を抜き出す
+        res = mt.parseToNode(lyrics[2])
+        lyrics_words = []
+        while res:
+            ft = res.feature.split(",")
+            if ft[0] == "名詞" or ft[0] == "動詞":
+                lyrics_words.append(ft[6])
+            res = res.next
+
+        # 翻訳文と歌詞の単語を比較し、単語のcos類似を調べる
+        # 最もcos類似度が近いものを保持する
+        word_cos = []
+        for ly_word in lyrics_words:
+            old_cos = 0
+            for trs_word in translation_words:
+                # modelに単語がない場合KeyErrorになる
+                #print ly_word, trs_word
+                try:
+                    cos = model.similarity(unicode(ly_word, "utf-8"), unicode(trs_word, "utf-8"))
+                except KeyError:
+                    print ly_word, trs_word
+                    cos = 0.0
+                #print cos
+                if old_cos < cos:
+                    old_cos = cos
+            word_cos.append((ly_word, old_cos))
+            #print "max: %f" % old_cos
+
+        # 距離の合計
+        result_cos = 0.0
+        for a in word_cos:
+            #print a[0], a[1]
+            result_cos = result_cos + a[1]
+
+        result.append((lyrics[0], lyrics[1], lyrics[2], lyrics[3], result_cos))
+
+    # 結果をcos類似度順に並べ替え
+    result = sorted(result, key=lambda x: float(x[4]))
+
+    return result
+
+
 def create_lyrics():
     # タプル(英語歌詞、機械翻訳文, モーラ数と音節)
     lyrics = [
@@ -237,10 +300,13 @@ def create_lyrics():
         ("How could I face the faceless days. If I should lose you now", "顔のない日を直面するに可能性。場合は、今あなたを失う必要があります?", [8,6,6]),
     ]
 
-    translate = ["datas/translate/bigram.txt"]
-    wiki = ["datas/wiki/bigram.txt"]
+    translate = ["datas/translate/bigram.txt", "datas/translate/vector.model"]
+    wiki = ["datas/wiki/bigram.txt", "datas/wiki/vector.model"]
 
     sources = translate
+
+    # モデルの読み込み
+    model =  word2vec.Word2Vec.load(sources[1])
 
     # wiki bigramを読み込み、bigramsのリストを生成
     print "creating bigrams...."
@@ -250,21 +316,23 @@ def create_lyrics():
 
     # 候補となる単語を渡し、モーラを指定し、モーラと一致する歌詞候補のリストを生成
     # TODO 助詞がない歌詞っぽい文章も作れるようにする
-    # TODO 母音の指定
-    vowel = [("o", 3),("a", 5)]
+    # TODO 言語モデルの確率をちゃんと求める
+    vowel = [("a", 3),("a", 5)]
     print "creating candidate list...."
-    candidate_list = create_candidate_list(bigrams, "バラ", 5, vowel)
+    candidate_list = create_candidate_list(bigrams, "時", 5, vowel)
 
-    # 候補のリストから、元の文章と類似度が高いものを選出する
+    # 候補のリストから、元の文章とcos類似度が高いものを選出する
+    l = "これは、瞬間です"
+    candidate_list = mean_cos_similarity(model, l, candidate_list)
 
-    #TODO difflib使ってるけど、他で類似度計算するべき -> doc2vecとか？
+    #TODO difflibはたぶんいらない
     # 歌詞候補の一覧
-    l = "バラに滴る雨滴"
+    #l = "バラに滴る雨滴"
     for a in candidate_list:
         #diff = difflib.SequenceMatcher(None, l.strip(), a[2].strip()).ratio()
         #if diff > 0.6:
             #print a[2]+b[2]
-        print a[2], a[3]
+            print a[2], a[3], a[4]
     print "%d candidate" % len(candidate_list)
 
 
@@ -273,6 +341,3 @@ if __name__ == '__main__':
 
     # 歌詞の作成
     create_lyrics()
-    #vowel = [("a", 2), ("u", 3)]
-    #match_text_vowel("ヴァラシュディン", vowel)
-    

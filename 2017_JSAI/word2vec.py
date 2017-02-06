@@ -34,18 +34,28 @@ def word_cos(filename, posi, nega=[], n=10):
         print cnt,'　', r[0],'　', r[1]
         cnt += 1
 
+def similar(word1, word2, filename):
+    model = word2vec.Word2Vec.load(filename)
+    print word1, word2
+    try:
+        print model.similarity(word1, word2)
+    except KeyError:
+        print "oooops"
+
 if __name__ == '__main__':
     piapro = ['datas/piapro/corpus.txt', 'datas/piapro/vector.model']
     translate = ['datas/translate/corpus.txt', 'datas/translate/vector.model']
     wiki = ['datas/wiki/corpus.txt', 'datas/wiki/vector.model']
 
-    datas = wiki
+    datas = translate
 
     # モデルの作成
     #create_vect(datas)
 
     # 入力された単語から近い単語をn個表示する
-    word = "時"
+    word = "香水"
     word = unicode(word, 'utf-8')
-    word_cos(datas[1], [word])
+    #word_cos(datas[1], [word])
+
+    similar(u"香水", u"バラ", datas[1])
 

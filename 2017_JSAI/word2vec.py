@@ -47,7 +47,7 @@ if __name__ == '__main__':
     translate = ['datas/translate/corpus.txt', 'datas/translate/vector.model']
     wiki = ['datas/wiki/corpus.txt', 'datas/wiki/vector.model']
 
-    datas = translate
+    datas = wiki
 
     # モデルの作成
     #create_vect(datas)
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     # 入力された単語から近い単語をn個表示する
     word = "香水"
     word = unicode(word, 'utf-8')
-    #word_cos(datas[1], [word])
+    word_cos(datas[1], [word])
 
     similar(u"香水", u"バラ", datas[1])
 

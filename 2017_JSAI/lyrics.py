@@ -4,7 +4,6 @@
 import nltk
 import MeCab
 import jaconv
-import difflib
 import re
 from gensim.models import word2vec
 
@@ -98,7 +97,7 @@ tuple(word1, word2, sentence, prob)
 @return True / False
 """
 def judge_research(t):
-    threadshold = 0.00004
+    threadshold = 0
     #print "judge: %s, %f" % (t[2], float(t[3]))
     if float(t[3]) > threadshold:
         return True
@@ -124,7 +123,9 @@ def match_text_vowel(txt, vowel):
         "e":".+ェ",
         "o":".+ォ|.+ョ"
     }
-    # TODO 小文字やンが使われていたら、1モーラとしないといけない／(^o^)＼
+    # TODO 小文字やンが使われていたら、1モーラとするべきかの判定が必要(リズム等を考慮する)
+    # TODO 拗音とかがまざるとズレてるので注意
+    # ex. i,6 :バラの研究
     t = unicode(txt.decode('utf-8'))
     for v in vowel:
         trim = vowel_trim[v[0]]
@@ -132,6 +133,7 @@ def match_text_vowel(txt, vowel):
         #print len(t), int(v[1]), t
         if len(t) >= int(v[1]):
             mora_num, mora_list = count_mora(txt)
+            #print len(t), mora_num
             if len(t) == mora_num:
                 # 与えられたtextの文字数とモーラ数が一致
                 # 拗音と促音、撥音を含まないと判断
@@ -141,12 +143,14 @@ def match_text_vowel(txt, vowel):
                 # モーラ数が指定されたモーラ位置より多ければ実行
                 #print mora_num, v[1]-1, mora_list[0]
                 if mora_num > v[1]-1:
+                    #print mora_list[v[1]-1]
                     # 拗音 / 促音 / 撥音を含む場合
                     # 拗音
                     if not re.match(l_trim, mora_list[v[1]-1].encode("utf-8")):
+                        return False
                         # 促音と撥音
-                        if not re.match(trim, mora_list[v[1]-1].encode("utf-8")):
-                            return False
+                    if not re.match(trim, mora_list[v[1]-1].encode("utf-8")):
+                        return False
     return True
 
 
@@ -159,7 +163,7 @@ TODO 動的計画法
 def search_candidate_from_mora(candidate, mora, vowel):
     result = []
     search = []
-    threadshold = 0.00004
+    threadshold = 0
 
     for a in candidate:
         # 与えられたbi-gramの候補(漢字混じり)がモーラ数より大きければその時点で次に行く
@@ -197,7 +201,6 @@ def search_candidate_from_mora(candidate, mora, vowel):
 # 単語とモーラから歌詞の候補リストを作成
 """
 def create_candidate_list(bigrams, word, mora, vowel):
-    # TODO トライ木を使った方が良い？？ -> https://github.com/IshitaTakeshi/Louds-Trie
     result = []
     search = []
     
@@ -219,13 +222,14 @@ def create_candidate_list(bigrams, word, mora, vowel):
         # 再検索なので、配列のsentence部分に以前のbigramを足したものをいれとく
         # TODO 文章らしさの計算のため、確率を求める必要あり。
         for b in candidate:
-            re_candidate.append((b[0], b[1], a[2]+b[1], float(a[3])*float(b[3])))
+            if a[3] and b[3]:
+                re_candidate.append((b[0], b[1], a[2]+b[1], float(a[3])*float(b[3])))
             #print("tuple(%s, %s, %s)") %(b[0], b[1], a[2]+b[1])
             #print a[2]+b[1]
         re_result, re_search = search_candidate_from_mora(re_candidate, mora, vowel)
         result.extend(re_result)
         search.extend(re_search)
-        print "loop: %d, resutl_length: %d, search_length: %d" % (num, len(result), len(search))
+        print "loop: %d, result_length: %d, search_length: %d" % (num, len(result), len(search))
         num = num+1
 
     return result
@@ -233,7 +237,7 @@ def create_candidate_list(bigrams, word, mora, vowel):
 """
 # 渡された機械翻訳文と生成された歌詞の単語のベクトル距離を計算して返す
 @param lyrics arr[(word1, word2, lyrics, prob)]
-@return arr[(word1, word2, lyrics, prob, dist)]
+@return arr[(lyrics, prob, cos)]
 """
 def mean_cos_similarity(model, translation, lyrics_arr):
     result = []
@@ -284,13 +288,64 @@ def mean_cos_similarity(model, translation, lyrics_arr):
             #print a[0], a[1]
             result_cos = result_cos + a[1]
 
-        result.append((lyrics[0], lyrics[1], lyrics[2], lyrics[3], result_cos))
-
-    # 結果をcos類似度順に並べ替え
-    result = sorted(result, key=lambda x: float(x[4]))
+        result.append((lyrics[2], lyrics[3], result_cos))
 
     return result
 
+"""
+# 歌詞モデルに従いスコアを計算する
+@param lyrics arr[(lyrics, prob, cos)]
+@return arr[(lyrics, prob, cos, lyr)]
+"""
+def calc_lyrics_model(lyrics_arr):
+    result = []
+    filename = "datas/piapro/dic.txt"
+    file = open(filename)
+    data = file.read()
+    file.close()
+    dic = data.split("\n")
+
+    mt = MeCab.Tagger(' -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd')
+    for lyrics in lyrics_arr:
+        res = mt.parseToNode(lyrics[0])
+
+        # 調べる対象とする単語を抜き出す
+        target_wrod = {}
+        while res:
+            ft = res.feature.split(",")
+            if ft[0] == "名詞" or ft[0] == "動詞" or ft[0] == "形容詞":
+                target_wrod[res.surface] = target_wrod.get(res.surface, 0)
+                # 対象の単語がpiaproの辞書にあるか調べる
+                if res.surface in dic:
+                    target_wrod[res.surface] = 1
+            res = res.next
+
+        # 割合の計算
+        num = 0
+        for k,v in target_wrod.items():
+            if v == 1:
+                num = num + 1
+            #print k,v
+
+        fl = float(num)/float(len(target_wrod))
+        result.append((lyrics[0], lyrics[1], lyrics[2], fl))
+
+    return result
+
+"""
+# 文章らしさ、翻訳の確からしさ、歌詞らしさからスコアをつける
+@param lyrics arr[(lyrics, prob, cos, lyr)]
+@param weight arr[float, float, float]
+@return arr[(lyrics, prob, cos, lyr, score)]
+"""
+def scoring(lyrics_arr, weight):
+    result = []
+
+    for lyrics in lyrics_arr:
+        score = float(lyrics[1])*weight[0] + float(lyrics[2])*weight[1] + float(lyrics[3])*weight[2]
+        result.append((lyrics[0], lyrics[1], lyrics[2], lyrics[3], score))
+
+    return result
 
 def create_lyrics():
     # タプル(英語歌詞、機械翻訳文, モーラ数と音節)
@@ -303,7 +358,7 @@ def create_lyrics():
     translate = ["datas/translate/bigram.txt", "datas/translate/vector.model"]
     wiki = ["datas/wiki/bigram.txt", "datas/wiki/vector.model"]
 
-    sources = translate
+    sources = wiki
 
     # モデルの読み込み
     model =  word2vec.Word2Vec.load(sources[1])
@@ -317,22 +372,81 @@ def create_lyrics():
     # 候補となる単語を渡し、モーラを指定し、モーラと一致する歌詞候補のリストを生成
     # TODO 助詞がない歌詞っぽい文章も作れるようにする
     # TODO 言語モデルの確率をちゃんと求める
-    vowel = [("a", 3),("a", 5)]
-    print "creating candidate list...."
-    candidate_list = create_candidate_list(bigrams, "時", 5, vowel)
 
-    # 候補のリストから、元の文章とcos類似度が高いものを選出する
-    l = "これは、瞬間です"
+    #l = "これは、瞬間です"
+    #vowel = [("a", 3),("a", 5)]
+
+    l = "バラに滴る雨滴"
+    #l = "子猫のヒゲ"
+    vowel = [("o", 3)]
+    #vowel = []
+    print "creating candidate list...."
+    candidate_list = create_candidate_list(bigrams, "バラ", 6, vowel)
+
+    # 候補のリストから、翻訳文と生成文を与え翻訳モデルのスコアを計算する
+    # TODO 翻訳モデルの求め方を再度定義すべき
     candidate_list = mean_cos_similarity(model, l, candidate_list)
 
-    #TODO difflibはたぶんいらない
+    # 歌詞モデルのスコアを計算する
+    candidate_list = calc_lyrics_model(candidate_list)
+
+    # 重み付けをして候補の順位を決定する
+    # 言語モデル / 翻訳モデル / 歌詞モデル
+    weight = [1.0, 0.0, 0.0]
+    print weight
+    candidate_list = scoring(candidate_list, weight)
+
+    # cos類似度で並べ替え
+    #candidate_list = sorted(candidate_list, key=lambda x: float(x[2]))
+    # 言語モデルで並べ替え
+    #candidate_list = sorted(candidate_list, key=lambda x: float(x[1]))
+    # スコアで並べ替え
+    candidate_list = sorted(candidate_list, key=lambda x: float(x[4]))
+
     # 歌詞候補の一覧
-    #l = "バラに滴る雨滴"
     for a in candidate_list:
-        #diff = difflib.SequenceMatcher(None, l.strip(), a[2].strip()).ratio()
-        #if diff > 0.6:
-            #print a[2]+b[2]
-            print a[2], a[3], a[4]
+        print a[0], a[1], a[2], a[3], a[4]
+    print "%d candidate" % len(candidate_list)
+
+    # 実験結果用 いらない
+    weight = [1.0, 0.0, 0.0]
+    print weight
+    result(candidate_list, weight)
+
+    weight = [0.0, 1.0, 0.0]
+    print weight
+    result(candidate_list, weight)
+
+    weight = [0.0, 0.0, 1.0]
+    print weight
+    result(candidate_list, weight)
+
+    weight = [0.4, 0.3, 0.3]
+    print weight
+    result(candidate_list, weight)
+
+    weight = [0.6, 0.3, 0.1]
+    print weight
+    result(candidate_list, weight)
+
+    weight = [0.5, 0.5, 0.0]
+    print weight
+    result(candidate_list, weight)
+
+    weight = [0.6, 0.4, 0.0]
+    print weight
+    result(candidate_list, weight)
+
+def result(candidate_list, weight):
+    candidate_list = scoring(candidate_list, weight)
+
+    # スコアで並べ替え
+    candidate_list = sorted(candidate_list, key=lambda x: float(x[4]))
+
+    # 歌詞候補の一覧
+    for i in range(0, 5):
+        a = candidate_list[i]
+        print a[0], a[1], a[2], a[3], a[4]
     print "%d candidate" % len(candidate_list)
 
 
@@ -341,3 +455,6 @@ if __name__ == '__main__':
 
     # 歌詞の作成
     create_lyrics()
+
+    #tf = match_text_vowel("バラノケンキュウ", [("i", 6)])
+    #print tf

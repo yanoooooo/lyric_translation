@@ -9,6 +9,7 @@ def create_bigram(filename, output):
     file.close()
     data = data.replace("\n{2,}", "\n")
     data = data.replace("\n", " ")
+    data = data.replace(",", "")
     data = data.replace(" {2,}", " ")
     tokens = data.split(" ")
     bigrams = nltk.bigrams(tokens)
@@ -30,7 +31,7 @@ def create_bigram(filename, output):
             dic[bigram] = dic.get(bigram, 0) + 1
             head_word[a[0]] = head_word.get(a[0], 0) + 1
             #file.write(a[0]+","+a[1]+"\n")
-            #print("%s %s") % (a[0].decode("utf-8"), a[1].decode("utf-8"))
+            print("%s %s") % (a[0].decode("utf-8"), a[1].decode("utf-8"))
     file = open(output, "w")
     for k,v in dic.items():
         # bigramと出現頻度の書き出し
@@ -39,7 +40,7 @@ def create_bigram(filename, output):
         if word[0] in head_word:
             #print word[0], head_word[word[0]]
             p = float(v) / float(head_word[word[0]])
-            #print "%s: %f" % (k, p)
+            print "%s: %f" % (k, p)
             file.write(k+","+str(p)+"\n")
     file.close()
 
@@ -50,5 +51,5 @@ if __name__ == '__main__':
     translate = ['datas/translate/corpus.txt', 'datas/translate/bigram.txt']
     wiki = ['datas/wiki/corpus.txt', 'datas/wiki/bigram.txt']
 
-    datas = translate
+    datas = wiki
     create_bigram(datas[0], datas[1])

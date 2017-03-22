@@ -97,7 +97,8 @@ tuple(word1, word2, sentence, prob)
 @return True / False
 """
 def judge_research(t):
-    threadshold = 0
+    #threadshold = 0.000001
+    threadshold = 0.000114849 #average
     #print "judge: %s, %f" % (t[2], float(t[3]))
     if float(t[3]) > threadshold:
         return True
@@ -163,7 +164,7 @@ TODO 動的計画法
 def search_candidate_from_mora(candidate, mora, vowel):
     result = []
     search = []
-    threadshold = 0
+    threadshold = 0.000011099
 
     for a in candidate:
         # 与えられたbi-gramの候補(漢字混じり)がモーラ数より大きければその時点で次に行く
@@ -186,11 +187,12 @@ def search_candidate_from_mora(candidate, mora, vowel):
         # 最後の文字が「ッ」の場合は言葉として不成立
         if mora_num == mora and not (katakana.find("ッ")/3 == len(katakana)/3-1):
             # 文章らしさの確率が閾値以上なら候補とする
+            #print "candidate: %s, %f" % (a[2], float(a[3]))
             if float(a[3]) > threadshold:
                 result.append(a)
         # mora数より少なければ次の検索候補となる
         if mora_num < mora:
-            # 検索候補の文章が再検索するに相応しいか判断する
+            # TODO 検索候補の文章が再検索するに相応しいか判断する
             if judge_research(a):
                 search.append(a)
             #print len(s)/3, a[2]
@@ -342,7 +344,7 @@ def scoring(lyrics_arr, weight):
     result = []
 
     for lyrics in lyrics_arr:
-        score = float(lyrics[1])*weight[0] + float(lyrics[2])*weight[1] + float(lyrics[3])*weight[2]
+        score = float(lyrics[1]) + float(lyrics[2]) + float(lyrics[3])*weight
         result.append((lyrics[0], lyrics[1], lyrics[2], lyrics[3], score))
 
     return result
@@ -358,7 +360,7 @@ def create_lyrics():
     translate = ["datas/translate/bigram.txt", "datas/translate/vector.model"]
     wiki = ["datas/wiki/bigram.txt", "datas/wiki/vector.model"]
 
-    sources = wiki
+    sources = translate
 
     # モデルの読み込み
     model =  word2vec.Word2Vec.load(sources[1])
@@ -373,15 +375,18 @@ def create_lyrics():
     # TODO 助詞がない歌詞っぽい文章も作れるようにする
     # TODO 言語モデルの確率をちゃんと求める
 
-    #l = "これは、瞬間です"
+    
     #vowel = [("a", 3),("a", 5)]
 
-    l = "バラに滴る雨滴"
+    #l = "バラに滴る雨滴"
     #l = "子猫のヒゲ"
-    vowel = [("o", 3)]
+    #l = "これは、瞬間です"
+    l = "時間として古い物語"
+    #l = "話すことができない悲しみがあります"
+    vowel = [("a", 5)]
     #vowel = []
     print "creating candidate list...."
-    candidate_list = create_candidate_list(bigrams, "バラ", 6, vowel)
+    candidate_list = create_candidate_list(bigrams, "古い", 8, vowel)
 
     # 候補のリストから、翻訳文と生成文を与え翻訳モデルのスコアを計算する
     # TODO 翻訳モデルの求め方を再度定義すべき
@@ -392,7 +397,7 @@ def create_lyrics():
 
     # 重み付けをして候補の順位を決定する
     # 言語モデル / 翻訳モデル / 歌詞モデル
-    weight = [1.0, 0.0, 0.0]
+    weight = 1.0
     print weight
     candidate_list = scoring(candidate_list, weight)
 
@@ -409,31 +414,19 @@ def create_lyrics():
     print "%d candidate" % len(candidate_list)
 
     # 実験結果用 いらない
-    weight = [1.0, 0.0, 0.0]
+    weight = 0.8
     print weight
     result(candidate_list, weight)
 
-    weight = [0.0, 1.0, 0.0]
+    weight = 0.5
     print weight
     result(candidate_list, weight)
 
-    weight = [0.0, 0.0, 1.0]
+    weight = 0.3
     print weight
     result(candidate_list, weight)
 
-    weight = [0.4, 0.3, 0.3]
-    print weight
-    result(candidate_list, weight)
-
-    weight = [0.6, 0.3, 0.1]
-    print weight
-    result(candidate_list, weight)
-
-    weight = [0.5, 0.5, 0.0]
-    print weight
-    result(candidate_list, weight)
-
-    weight = [0.6, 0.4, 0.0]
+    weight = 0.0
     print weight
     result(candidate_list, weight)
 
@@ -442,9 +435,9 @@ def result(candidate_list, weight):
 
     # スコアで並べ替え
     candidate_list = sorted(candidate_list, key=lambda x: float(x[4]))
-
+    candidate_list.reverse()
     # 歌詞候補の一覧
-    for i in range(0, 5):
+    for i in range(0,5):
         a = candidate_list[i]
         print a[0], a[1], a[2], a[3], a[4]
     print "%d candidate" % len(candidate_list)

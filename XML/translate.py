@@ -14,6 +14,9 @@ def translate(mora_src):
 
     for ms in mora_src:
         obj_ln = translator.translate(ms[1], "ja")
+        obj_ln = obj_ln.encode('utf-8')
+        obj_ln = obj_ln.replace("。", "")
+        obj_ln = obj_ln.replace("・", "")
         result.append((ms[0], ms[1], obj_ln))
 
     return result

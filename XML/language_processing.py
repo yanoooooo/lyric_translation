@@ -47,6 +47,56 @@ def delete_honolific(sentence):
 
     return result
 
+# 「だ」の断定を削除
+def delete_da(sentence):
+    mt = MeCab.Tagger(' -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd')
+    res = mt.parseToNode(sentence)
+
+    # [(要素, 品詞, 詳細な品詞, 原形),("落ち", 動詞, 自立, "落ちる")....]
+    elements = []
+    while res:
+        ft = res.feature.split(",")
+        elements.append((res.surface, ft[0], ft[1], ft[6]))
+        #print res.surface, res.feature
+        res = res.next
+
+    # BOS/EOSの削除
+    elements.pop(0)
+    elements.pop()
+
+    result = ""
+    if elements[-1][0] == "だ" and elements[-1][1] == "助動詞":
+        for a in elements[:-1]:
+            result = result + a[0]
+
+    if result == "":
+        result = sentence
+
+    return result
+
+# 助詞を省略
+def delete_particle(sentence):
+    mt = MeCab.Tagger(' -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd')
+    res = mt.parseToNode(sentence)
+
+    # [(要素, 品詞, 詳細な品詞, 原形),("落ち", 動詞, 自立, "落ちる")....]
+    elements = []
+    while res:
+        ft = res.feature.split(",")
+        elements.append((res.surface, ft[0], ft[1], ft[6]))
+        #print res.surface, res.feature
+        res = res.next
+
+    # BOS/EOSの削除
+    elements.pop(0)
+    elements.pop()
+
+    result = ""
+    for a in elements:
+        if a[1] != "助詞":
+            result = result + a[0]
+
+    return result
 
 if __name__ == '__main__':
     arr = [
@@ -64,7 +114,7 @@ if __name__ == '__main__':
     ]
 
     for a in arr:
-        delete_honolific(a)
+        delete_particle(a)
 
-    delete_honolific("ロンドン橋が落ちています")
+    delete_particle("ロンドン橋が必要だ")
 

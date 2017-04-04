@@ -32,28 +32,41 @@ if __name__ == '__main__':
     #    print "------"
     
     # 翻訳のモーラが指定数以上の場合は、助詞を抜く等の操作を試みる
-    # [[lyrics, mora], [lyrics, mora]]
+    # lyrics = [lyrics, lyrics, ...]
     #たぷるは更新できないいいいいいいいいいいいいい
     lyrics = []
+    lyrics_mora = 0
     process = 0
     for num in range(0, len(mora_src_obj_om)):
+        process = 0
+        l = mora_src_obj_om[num][2]
+        lyrics_mora = mora_src_obj_om[num][3]
         while True:
             # 許容モーラ数になるまで文字数を減らす処理を続ける
-            if mora_src_obj_om[num][0]+permission_mora < mora_src_obj_om[num][3]:
+            if mora_src_obj_om[num][0]+permission_mora < lyrics_mora:
                 # ですます調を削除
                 # ます、の前の独立した動詞まで遡り、その原形を取得する
                 if process == 0:
-                    lyrics.append(lp.delete_honolific(mora_src_obj_om[num][2]))
+                    l = lp.delete_honolific(l)
+                    lyrics_mora = cm.count_mora(l)
                 # 「だ」の断定を削除
-                #else if process == 1:
+                elif process == 1:
+                    l = lp.delete_honolific(l)
+                    lyrics_mora = cm.count_mora(l)
                 # 助詞を省略
-                #else if process == 2:
+                elif process == 2:
+                    l = lp.delete_particle(l)
+                    lyrics_mora = cm.count_mora(l)
                 # 文章生成
-                #else if process == 3:
+                elif process == 3:
+                    # これ以上減らせないので諦める
+                    break
                 process = process+1
             else:
                 break
-            
+        #print("%s, 歌詞モーラ: %d, 許容モーラ: %d") % (l, lyrics_mora, mora_src_obj_om[num][0]+permission_mora)
+        lyrics.append(l)
+
     for a in lyrics:
         print a
 

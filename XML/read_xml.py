@@ -27,7 +27,7 @@ def parse_xml(filename):
         mora = mora + 1
 
         # ピリオドやカンマ等でフレーズを切る
-        if "." in text or "," in text:
+        if "." in text or "," in text or ";" in text:
             result.append((mora, lyrics.strip()))
             mora = 0
             lyrics = ""

@@ -45,13 +45,9 @@ def count(sentence):
     return result
 
 # @param mora_src_obj [(mora_num, "lyrics", "翻訳"), (mora_num, "lyrics", "翻訳").....]
-def count_mora(mora_src_obj):
-    result = []
-
-    for a in mora_src_obj:
-        katakana = kanji2katakana(a[2])
-        obj_mora = count(katakana)
-        result.append((a[0], a[1], a[2], obj_mora))
+def count_mora(sentence):
+    katakana = kanji2katakana(sentence)
+    result = count(katakana)
 
     return result
 

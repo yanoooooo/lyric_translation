@@ -31,6 +31,8 @@ def parse_xml(filename):
             result.append((mora, lyrics.strip()))
             mora = 0
             lyrics = ""
+    #for a  in result:
+    #    print a[0], a[1]
 
     return result
 

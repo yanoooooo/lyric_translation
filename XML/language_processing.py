@@ -1,6 +1,7 @@
 #coding:utf-8
 
 import MeCab
+import nltk
 
 # ですます調を削除
 # ます、の前の独立した動詞まで遡り、その原形を取得する
@@ -98,6 +99,48 @@ def delete_particle(sentence):
 
     return result
 
+# tf-idfを用いて単語に値を付与して返す
+# @return array[(word, tf-idf),(word, tf-idf)...]
+def tf_idf(sentence):
+    result = []
+    filename = "datas/corpus/tf_idf.txt"
+    file = open(filename)
+    data = file.read()
+    file.close()
+
+    data = data.decode("utf-8")
+    line = data.split("\n")
+
+    # 与えられた文章を形態素解析
+    mt = MeCab.Tagger(' -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd')
+    res = mt.parseToNode(sentence)
+
+    elements = []
+    while res:
+        ft = res.feature.split(",")
+        elements.append(res.surface.decode("utf-8"))
+        #print res.surface, res.feature
+        res = res.next
+
+    elements = elements[1:-1]
+
+    docs = []
+    docs.append(elements)
+
+    for l in line:
+        docs.append(l.split(" "))
+
+    collection = nltk.TextCollection(docs)
+    uniqTerms = list(set(collection))
+
+    for term in elements:
+        # print "%s : %f" % (term, collection.tf_idf(term, elements))
+        result.append((term.encode("utf-8"), collection.tf_idf(term, elements)))
+
+    result = sorted(result, reverse=True, key=lambda x: float(x[1]))
+    return result
+
+
 if __name__ == '__main__':
     arr = [
         "さまざまなマニュアル本に、恋を成功させるためのテクニックが紹介されています",
@@ -113,8 +156,15 @@ if __name__ == '__main__':
         "実は、上手に気持ちを伝え、甘え上手である人は、既に男運の良いモテ子だともいえます。だから、これはモテ子への近道でもあるのです"
     ]
 
-    for a in arr:
-        delete_particle(a)
+    ti = tf_idf("ある我々あなたと私両方座る")
 
-    delete_particle("ロンドン橋が必要だ")
+    for a in ti:
+        print a[0], a[1]
+
+    #for a in arr:
+    #    delete_particle(a)
+
+    #delete_particle("ロンドン橋が必要だ")
+
+
 

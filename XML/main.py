@@ -7,6 +7,7 @@ import count_mora as cm
 import language_processing as lp
 
 permission_mora = 0 # 溢れるのを許容するモーラ数
+reduce_mora = 3 #減るのを許容するモーラ数
 
 if __name__ == '__main__':
     # XMLの読み込み
@@ -33,7 +34,6 @@ if __name__ == '__main__':
     
     # 翻訳のモーラが指定数以上の場合は、助詞を抜く等の操作を試みる
     # lyrics = [lyrics, lyrics, ...]
-    #たぷるは更新できないいいいいいいいいいいいいい
     lyrics = []
     lyrics_mora = 0
     process = 0
@@ -59,12 +59,22 @@ if __name__ == '__main__':
                     lyrics_mora = cm.count_mora(l)
                 # 文章生成
                 elif process == 3:
+                    # 文章中の単語にtf-idf値を付与する
+                    ti = lp.tf_idf(l)
+                    # TODO 同じtf-idfの値があったらどうするか？？？？？？？？？？
+                    l = ti[0][0]
+                    lyrics_mora = cm.count_mora(l)
+
+                    # モーラ数が許容する減少モーラより少ない場合は文章生成
+                    if lyrics_mora < mora_src_obj_om[num][0]+permission_mora-reduce_mora:
+                        print "OoooooPS!"
+                elif process == 4:
                     # これ以上減らせないので諦める
                     break
                 process = process+1
             else:
                 break
-        #print("%s, 歌詞モーラ: %d, 許容モーラ: %d") % (l, lyrics_mora, mora_src_obj_om[num][0]+permission_mora)
+        print("%s, 歌詞モーラ: %d, 許容モーラ: %d") % (l, lyrics_mora, mora_src_obj_om[num][0]+permission_mora)
         lyrics.append(l)
 
     for a in lyrics:

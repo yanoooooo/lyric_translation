@@ -7,6 +7,7 @@ import jaconv
 import re
 from gensim.models import word2vec
 import count_mora as cm
+import language_processing as lp
 
 class LyricsUtil:
     def __init__(self, resources):
@@ -99,7 +100,7 @@ class LyricsUtil:
                 continue
 
             # 漢字混じりの文章をカタカナに変換
-            katakana = cm.kanji2katakana(sentence.encode("utf-8"), True)
+            katakana = lp.kanji2katakana(sentence.encode("utf-8"), True)
             
             if katakana == False:
                 continue
@@ -361,7 +362,7 @@ if __name__ == '__main__':
     # 歌詞の作成
     #vowel = [("a", 3),("a", 5)]
     vowel = []
-    result = lu.create_lyrics("幸せ", "幸せがたくさんある", 8, vowel)
+    result = lu.create_lyrics("幸せ", "幸せな家庭", 8, vowel)
 
     print result
 

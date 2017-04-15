@@ -1,7 +1,7 @@
 #coding:utf-8
 # MusicXMLを読み込み、英語を日本語にしたXMLを返す
 
-import read_xml as rx
+import xml_util as rx
 import translate as trs
 import count_mora as cm
 import language_processing as lp
@@ -14,6 +14,7 @@ resource = novel
 
 permission_mora = 0 # 溢れるのを許容するモーラ数
 reduce_mora = 3 #減るのを許容するモーラ数
+output_xml = "./test.xml" #出力するxml名
 
 if __name__ == '__main__':
     # create class
@@ -42,7 +43,7 @@ if __name__ == '__main__':
     #    print "------"
     
     # 翻訳のモーラが指定数以上の場合は、助詞を抜く等の操作を試みる
-    # lyrics = [lyrics, lyrics, ...]
+    # lyrics = arr[("lyrics", lyrics_mora), ("lyrics", lyrics_mora)...]
     lyrics = []
     lyrics_mora = 0
     process = 0
@@ -80,6 +81,7 @@ if __name__ == '__main__':
                     if lyrics_mora < mora_src_obj_om[num][0]+permission_mora-reduce_mora:
                         vowel = []
                         l = ly_util.create_lyrics(l, mora_src_obj_om[num][2], mora_src_obj_om[num][0], vowel)
+                        lyrics_mora = cm.kanji_count_mora(l)
                         if l == False:
                             # 歌詞作成でどうにもならないので、今までのを返す
                             l = lyrics_old
@@ -92,10 +94,9 @@ if __name__ == '__main__':
                 process = process+1
             else:
                 break
-        print("%s, 歌詞モーラ: %d, 許容モーラ: %d") % (l, lyrics_mora, mora_src_obj_om[num][0]+permission_mora)
-        lyrics.append(l)
+        #print("%s, 歌詞モーラ: %d, 許容モーラ: %d") % (l, lyrics_mora, mora_src_obj_om[num][0]+permission_mora)
+        lyrics.append((lyrics_mora, l))
 
-    for a in lyrics:
-        print a
+    # MusicXMLの出力
+    rx.create_xml(lyrics, output_xml)
 
-    # MusicXMLの出力だが、モーラが合わない場合はどこかの音符を分割する

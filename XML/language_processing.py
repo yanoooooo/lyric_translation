@@ -3,6 +3,44 @@
 import MeCab
 import nltk
 
+"""
+# 与えられた漢字混じりの文章をカタカナにして返す
+# 助詞が連続するなどの文章としておかしなものはここで弾く
+@return string or false
+"""
+def kanji2katakana(sentence, particle=False):
+    # 漢字をの読みを取得
+    mt = MeCab.Tagger(' -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd')
+    res = mt.parseToNode(sentence)
+    
+    result = ""
+    old_part = ""
+
+    while res:
+        ft = res.feature.split(",")
+        # 助詞が連続していないことが前提
+        if particle == True:
+            if not (old_part == "助詞" and ft[0] == "助詞"):
+                # もともとカタカナだった場合は*が入ってる
+                if not ft[-2] == "*":
+                    result = result+ft[-2]
+                else:
+                    result = result+res.surface
+            else:
+                return False
+        else:
+            # もともとカタカナだった場合は*が入ってる
+            if not ft[-2] == "*":
+                result = result+ft[-2]
+            else:
+                result = result+res.surface
+        #print res.surface, res.feature
+        old_part = ft[0]
+        res = res.next
+
+    result = result.replace("*", "")
+    return result
+
 # ですます調を削除
 # ます、の前の独立した動詞まで遡り、その原形を取得する
 def delete_honolific(sentence):

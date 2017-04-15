@@ -9,7 +9,7 @@ from xml.etree.ElementTree import *
 @param filename
 @return array [(mora_num, "lyrics"), (mora_num, "lyrics").....]
 """
-def parse_xml(filename):
+def __parse_xml(filename):
     result = []
     tree = parse(filename)
     elem = tree.getroot()
@@ -46,6 +46,6 @@ def read_xml():
     filename = argvs[1]
 
     # [(mora_num, "lyrics"), (mora_num, "lyrics").....]
-    result = parse_xml(filename)
+    result = __parse_xml(filename)
     
     return result

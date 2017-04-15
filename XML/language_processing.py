@@ -101,12 +101,13 @@ def delete_particle(sentence):
 
 # tf-idfを用いて単語に値を付与して返す
 # @return array[(word, tf-idf),(word, tf-idf)...]
-def tf_idf(sentence):
+def tf_idf(sentence, resources):
     result = []
-    filename = "datas/corpus/tf_idf.txt"
+    filename = resources["corpus"]
     file = open(filename)
     data = file.read()
     file.close()
+    print "Finished reading file...."
 
     data = data.decode("utf-8")
     line = data.split("\n")
@@ -122,6 +123,8 @@ def tf_idf(sentence):
         #print res.surface, res.feature
         res = res.next
 
+    print "Finished morphological analysis...."
+
     elements = elements[1:-1]
 
     docs = []
@@ -129,6 +132,8 @@ def tf_idf(sentence):
 
     for l in line:
         docs.append(l.split(" "))
+
+    print "Finished spliting word...."
 
     collection = nltk.TextCollection(docs)
     uniqTerms = list(set(collection))
@@ -156,7 +161,7 @@ if __name__ == '__main__':
         "実は、上手に気持ちを伝え、甘え上手である人は、既に男運の良いモテ子だともいえます。だから、これはモテ子への近道でもあるのです"
     ]
 
-    ti = tf_idf("ある我々あなたと私両方座る")
+    ti = tf_idf("ある我々あなたと私両方座る", {"corpus": "datas/novel/corpus.txt"})
 
     for a in ti:
         print a[0], a[1]

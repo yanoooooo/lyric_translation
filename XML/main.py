@@ -81,8 +81,9 @@ if __name__ == '__main__':
                     if lyrics_mora < mora_src_obj_om[num][0]+permission_mora-reduce_mora:
                         vowel = []
                         l = ly_util.create_lyrics(l, mora_src_obj_om[num][2], mora_src_obj_om[num][0], vowel)
-                        lyrics_mora = cm.kanji_count_mora(l)
-                        if l == False:
+                        if l != False:
+                            lyrics_mora = cm.kanji_count_mora(l)
+                        else:
                             # 歌詞作成でどうにもならないので、今までのを返す
                             l = lyrics_old
                             lyrics_mora = cm.kanji_count_mora(l)

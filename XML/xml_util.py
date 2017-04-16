@@ -7,7 +7,7 @@ import jaconv
 import count_mora as cm
 import language_processing as lp
 
-notes = {"quarter":4, "eighth":8}
+notes = {"quarter":4, "eighth":8, "16th": 16}
 
 """
 # MusicXMLからモーラ数と原言語を抽出
@@ -58,30 +58,37 @@ def read_xml():
 """
 # 渡されたフレーズを解析し、歌詞に伸ばしを入れる
 """
-def __less_mora(score, lyrics):
-    result = ""
-    not_type = []
+def __less_mora(score, mora_list):
+    result = mora_list
+    note_type = []
 
     for s in score:
-        not_type.append(notes[s.find(".//type").text])
+        note_type.append(notes[s.find(".//type").text])
         #print s.find(".//type").text
-
+    
     # オリジナルと訳詞の差分モーラ
-    diff_mora = len(not_type) - len(lyrics)
+    diff_mora = len(note_type) - len(result)
     mora = 0
     # 配列から１番短い音の次の音を伸ばし棒にする
-    # TODO 愚直に最初に当たったやつからやってる
+    # TODO 愚直に最初に当たったやつからやってるのでもうちょっと音符考慮して…
+    # TODO 符点が考慮できてない</dot>というタグがつく
     while diff_mora > 0:
         # 次の音の方が短ければ、伸ばす
-        for num in range(0, len(not_type)-1):
-            if not_type[num] > not_type[num+1]:
-                #print lyrics[:num+1], lyrics[num+1:]
-                lyrics = lyrics[:num+1] + u"ー" + lyrics[num+1:]
+        for num in range(0, len(note_type)-1):
+            if note_type[num] > note_type[num+1]:
+                result.insert(num, u"ー")
+                #lyrics = lyrics[:num+1] + u"ー" + lyrics[num+1:]
                 diff_mora = diff_mora - 1
             if diff_mora == 0:
                 break
+        # 全部の音が等価だった、もしくは短い音符が少なかった場合
+        # 最後に伸ばしをつけることで一旦回避
+        if diff_mora > 0:
+            for num in range(0, diff_mora):
+                result.append(u"ー")
+                diff_mora = diff_mora - 1
+            break
 
-    result = lyrics
     return result
 
 """
@@ -105,47 +112,44 @@ def create_xml(lyrics, output):
     elem = tree.getroot()
 
     # オリジナルと訳詞の配列のフレーズ数が同じであること前提
-    sum_mora = 0
-    org_sum_mora = 0
+    current_mora = 0
+    #org_sum_mora = 0
     for num in range(0, len(lyrics)):
-        mora = lyrics[num][0]
-        katakana = unicode(lp.kanji2katakana(lyrics[num][1]).decode("utf-8"))
-        # TODO 撥音などがあるので、リストで取得しないとだめだ！！！！！！！！！！！！！
-        # count_mora_create_listを使う必要がある！！！！！！！！！
-        # カタカナは読みにくいので平仮名にしてあげる
-        hiragana = jaconv.kata2hira(katakana)
-        #print katakana, type(katakana), len(katakana), mora
-        
-        # オリジナルと翻訳のモーラ数が同じ
-        if org_lyrics[num][0] == mora:
-            for n in range(0, mora):
-                elem.findall(".//lyric")[sum_mora+n].find(".//text").text = hiragana[n]
-            sum_mora = sum_mora + mora
-            print "same"
+        #katakana = unicode(lp.kanji2katakana(lyrics[num][1]).decode("utf-8"))
+        katakana = lp.kanji2katakana(lyrics[num][1])
+        mora_list = cm.create_mora_list(katakana)
 
-        # オリジナルより翻訳のモーラ数が少ない
-        if org_lyrics[num][0] > mora:
+        # ----------------オリジナルと翻訳のモーラ数が同じ----------------
+        if org_lyrics[num][0] == lyrics[num][0]:
+            # 要素の入れ替え
+            for n in range(0, lyrics[num][0]):
+                #print jaconv.kata2hira(mora_list[n])
+                elem.findall(".//lyric")[current_mora+n].find(".//text").text = jaconv.kata2hira(mora_list[n])
+                elem.findall(".//lyric")[current_mora+n].find(".//syllabic").text = "single"
+            current_mora = current_mora + lyrics[num][0]
+            #print "same"
+
+        # ----------------オリジナルより翻訳のモーラ数が少ない----------------
+        if org_lyrics[num][0] > lyrics[num][0]:
             # 該当するスコア部分の切り出し / lyricsを含むnoteを切り出す
             # オリジナルスコアのモーラ数とフレーズの部分を切りだす
-            score = elem.findall(".//lyric/..")[org_sum_mora:org_sum_mora+org_lyrics[num][0]]
+            score = elem.findall(".//lyric/..")[current_mora:current_mora+org_lyrics[num][0]]
             # オリジナルのモーラ数に歌詞数をあわせる
-            hiragana = __less_mora(score, hiragana)
-            #print hiragana
+            mora_list = __less_mora(score, mora_list)
 
             # 要素の入れ替え
             for n in range(0, org_lyrics[num][0]):
-                #print hiragana[n]
-                elem.findall(".//lyric")[sum_mora+n].find(".//text").text = hiragana[n]
+                elem.findall(".//lyric")[current_mora+n].find(".//text").text = jaconv.kata2hira(mora_list[n])
+                elem.findall(".//lyric")[current_mora+n].find(".//syllabic").text = "single"
                 #print elem.findall(".//lyric")[n].find(".//text").text
-            sum_mora = sum_mora + org_lyrics[num][0]
-            print "less"
+            current_mora = current_mora + org_lyrics[num][0]
+            #print "less"
 
-        # オリジナルより翻訳のモーラ数が多い
-        if org_lyrics[num][0] < mora:
+        # ----------------オリジナルより翻訳のモーラ数が多い----------------
+        if org_lyrics[num][0] < lyrics[num][0]:
+            # とりあえず原言語のままにしている
+            current_mora = current_mora + org_lyrics[num][0]
             print "more"
-
-        
-        org_sum_mora = org_sum_mora + org_lyrics[num][0]
 
     # xmlの書き出し
     tree = ElementTree(elem)
@@ -161,4 +165,5 @@ def create_xml(lyrics, output):
 
 if __name__ == '__main__':
     lyrics = [(7, "栗木の下で"), (7, "あなたと私"), (8, "幸せはでそう"), (7, "栗木の下で")]
+    #lyrics = [(7, "ロンドン橋落ちる"), (3, "落ちる"), (3, "落ちる"), (7, "ロンドン橋落ちる"), (6, "マイフェアレディ")]
     create_xml(lyrics, "./test.xml")

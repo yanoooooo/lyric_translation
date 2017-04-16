@@ -2,12 +2,13 @@
 # XMLを読み込み歌詞とモーラ数を取り出す
 # 前提条件として、歌詞はピリオドで区切る
 import sys
+import copy
 from xml.etree.ElementTree import *
 import jaconv
 import count_mora as cm
 import language_processing as lp
 
-notes = {"quarter":4, "eighth":8, "16th": 16}
+notes = {"half":2, "quarter":4, "eighth":8, "16th": 16}
 
 """
 # MusicXMLからモーラ数と原言語を抽出
@@ -56,10 +57,13 @@ def read_xml():
     return result
 
 """
-# 渡されたフレーズを解析し、歌詞に伸ばしを入れる
+# オリジナルよりモーラ数が少ない場合、渡されたフレーズを解析し、歌詞に伸ばしを入れる
+@param score element
+@param mora_list arr["ロン", "ドン"....]
+return arr mora_list
 """
 def __less_mora(score, mora_list):
-    result = mora_list
+    result = mora_list[:]
     note_type = []
 
     for s in score:
@@ -68,7 +72,6 @@ def __less_mora(score, mora_list):
     
     # オリジナルと訳詞の差分モーラ
     diff_mora = len(note_type) - len(result)
-    mora = 0
     # 配列から１番短い音の次の音を伸ばし棒にする
     # TODO 愚直に最初に当たったやつからやってるのでもうちょっと音符考慮して…
     # TODO 符点が考慮できてない</dot>というタグがつく
@@ -89,6 +92,51 @@ def __less_mora(score, mora_list):
                 diff_mora = diff_mora - 1
             break
 
+    return result
+
+"""
+# オリジナルよりモーラ数が多い場合、音符を増やす
+@param score element
+@param mora_list arr["ロン", "ドン"....]
+return score
+"""
+def __more_mora(score, mora_list):
+    result = score[:]
+    note_type = []
+
+    for s in score:
+        note_type.append(notes[s.find(".//type").text])
+        #print s.find(".//type").text
+
+    # オリジナルと訳詞の差分モーラ
+    diff_mora = len(mora_list) - len(note_type)
+
+    # 配列内で１番大きい音符を分割していく
+    # TODO 符点を考慮していない
+    # TODO 先頭から愚直に分割している
+    while diff_mora > 0:
+        # 繰り返して最小の値を探す
+        mn = min(note_type)
+        for num in range(0, len(score)):
+            #print score[num].find(".//type").text
+            if score[num].find(".//type").text == notes.keys()[notes.values().index(mn)]:
+                # 音符を挿入
+                node = copy.deepcopy(score[num])
+                result.insert(num, node)
+                # 音長を変更
+                # TODO notesに値が無い場合はエラーで落ちる
+                result[num].find(".//type").text = notes.keys()[notes.values().index(mn*2)]
+                result[num+1].find(".//type").text = notes.keys()[notes.values().index(mn*2)]
+                diff_mora = diff_mora - 1
+            if diff_mora == 0:
+                break
+        # note_typeの更新
+        note_type = []
+        for s in result:
+            note_type.append(notes[s.find(".//type").text])
+
+    #for s in result:
+    #    print s.find(".//type").text
     return result
 
 """
@@ -147,8 +195,35 @@ def create_xml(lyrics, output):
 
         # ----------------オリジナルより翻訳のモーラ数が多い----------------
         if org_lyrics[num][0] < lyrics[num][0]:
-            # とりあえず原言語のままにしている
-            current_mora = current_mora + org_lyrics[num][0]
+            # 該当するスコア部分の切り出し / lyricsを含むnoteを切り出す
+            # オリジナルスコアのモーラ数とフレーズの部分を切りだす
+            score = elem.findall(".//lyric/..")[current_mora:current_mora+org_lyrics[num][0]]
+
+            # TODO measure（小節）単位でやった方がよいかも・・・・
+            # 訳詞のモーラ数に歌詞数をあわせる
+            new_elem = __more_mora(score, mora_list)
+            # 切り出した範囲の配列を削除
+            for measure in elem.findall(".//measure"):
+                for note in measure.findall("note"):
+                    if note in elem.findall(".//lyric/..")[current_mora:current_mora+org_lyrics[num][0]]:
+                        modify_measure = measure
+                        measure.remove(note)
+            
+            # 分割した音符を挿入
+            for measure in elem.findall(".//measure"):
+                if modify_measure == measure:
+                    for n in range(0, len(new_elem)):
+                        #measure.insert(current_mora+n, new_elem[n])
+                        measure.append(new_elem[n])
+                    break
+
+            # 要素の入れ替え
+            for n in range(0, lyrics[num][0]):
+                print elem.findall(".//lyric")[current_mora+n].find(".//text").text
+                elem.findall(".//lyric")[current_mora+n].find(".//text").text = jaconv.kata2hira(mora_list[n])
+                elem.findall(".//lyric")[current_mora+n].find(".//syllabic").text = "single"
+            
+            current_mora = current_mora + lyrics[num][0]
             print "more"
 
     # xmlの書き出し
@@ -164,6 +239,6 @@ def create_xml(lyrics, output):
 
 
 if __name__ == '__main__':
-    lyrics = [(7, "栗木の下で"), (7, "あなたと私"), (8, "幸せはでそう"), (7, "栗木の下で")]
-    #lyrics = [(7, "ロンドン橋落ちる"), (3, "落ちる"), (3, "落ちる"), (7, "ロンドン橋落ちる"), (6, "マイフェアレディ")]
+    #lyrics = [(7, "栗木の下で"), (7, "あなたと私"), (8, "幸せはでそう"), (7, "栗木の下で")]
+    lyrics = [(7, "ロンドン橋落ちる"), (3, "落ちる"), (3, "落ちる"), (7, "ロンドン橋落ちる"), (6, "マイフェアレディ")]
     create_xml(lyrics, "./test.xml")

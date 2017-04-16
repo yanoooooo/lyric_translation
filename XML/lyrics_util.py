@@ -110,7 +110,8 @@ class LyricsUtil:
                 continue
             
             #カタカナのモーラ数を判定する
-            mora_num, mora_list = cm.count_mora_create_list(katakana)
+            mora_num = cm.count_mora(katakana)
+            mora_list = cm.create_mora_list(katakana)
             
             # mora数ピッタリなら結果の配列へ
             # 最後の文字が「ッ」の場合は言葉として不成立
@@ -170,7 +171,8 @@ class LyricsUtil:
             l_trim = lowcase_trim[v[0]]
             #print len(t), int(v[1]), t
             if len(t) >= int(v[1]):
-                mora_num, mora_list = cm.count_mora_create_list(katakana)
+                mora_num = cm.count_mora(katakana)
+                mora_list = cm.create_mora_list(katakana)
                 #print len(t), mora_num
                 if len(t) == mora_num:
                     # 与えられたtextの文字数とモーラ数が一致

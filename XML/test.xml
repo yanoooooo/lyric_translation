@@ -395,11 +395,39 @@
           </pitch>
         <duration>4</duration>
         <voice>1</voice>
-        <type>half</type>
+        <type>quarter</type>
         <stem>up</stem>
         <lyric number="1">
           <syllabic>single</syllabic>
-          <text>my</text>
+          <text>&#12414;</text>
+          </lyric>
+        </note>
+      <note default-x="123.04" default-y="-10.00">
+        <pitch>
+          <step>D</step>
+          <octave>5</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
+        <lyric number="1">
+          <syllabic>single</syllabic>
+          <text>&#12356;</text>
+          </lyric>
+        </note>
+      <note default-x="18.79" default-y="-25.00">
+        <pitch>
+          <step>A</step>
+          <octave>4</octave>
+          </pitch>
+        <duration>4</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>up</stem>
+        <lyric number="1">
+          <syllabic>single</syllabic>
+          <text>&#12405;&#12359;</text>
           </lyric>
         </note>
       <note default-x="123.04" default-y="-10.00">
@@ -413,7 +441,7 @@
         <stem>down</stem>
         <lyric number="1">
           <syllabic>single</syllabic>
-          <text>fair</text>
+          <text>&#12354;</text>
           </lyric>
         </note>
       </measure>
@@ -428,8 +456,8 @@
         <type>quarter</type>
         <stem>down</stem>
         <lyric number="1">
-          <syllabic>begin</syllabic>
-          <text>la</text>
+          <syllabic>single</syllabic>
+          <text>&#12428;</text>
           </lyric>
         </note>
       <note default-x="81.77" default-y="-30.00">
@@ -443,8 +471,8 @@
         <dot />
         <stem>up</stem>
         <lyric number="1">
-          <syllabic>end</syllabic>
-          <text>dy.</text>
+          <syllabic>single</syllabic>
+          <text>&#12391;&#12355;</text>
           </lyric>
         </note>
       </measure>

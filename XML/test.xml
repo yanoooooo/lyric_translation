@@ -393,7 +393,7 @@
           <step>A</step>
           <octave>4</octave>
           </pitch>
-        <duration>4</duration>
+        <duration>2</duration>
         <voice>1</voice>
         <type>quarter</type>
         <stem>up</stem>
@@ -402,29 +402,29 @@
           <text>&#12414;</text>
           </lyric>
         </note>
-      <note default-x="123.04" default-y="-10.00">
-        <pitch>
-          <step>D</step>
-          <octave>5</octave>
-          </pitch>
-        <duration>4</duration>
-        <voice>1</voice>
-        <type>quarter</type>
-        <stem>down</stem>
-        <lyric number="1">
-          <syllabic>single</syllabic>
-          <text>&#12356;</text>
-          </lyric>
-        </note>
       <note default-x="18.79" default-y="-25.00">
         <pitch>
           <step>A</step>
           <octave>4</octave>
           </pitch>
-        <duration>4</duration>
+        <duration>2</duration>
         <voice>1</voice>
         <type>quarter</type>
         <stem>up</stem>
+        <lyric number="1">
+          <syllabic>single</syllabic>
+          <text>&#12356;</text>
+          </lyric>
+        </note>
+      <note default-x="123.04" default-y="-10.00">
+        <pitch>
+          <step>D</step>
+          <octave>5</octave>
+          </pitch>
+        <duration>2</duration>
+        <voice>1</voice>
+        <type>quarter</type>
+        <stem>down</stem>
         <lyric number="1">
           <syllabic>single</syllabic>
           <text>&#12405;&#12359;</text>
@@ -435,9 +435,9 @@
           <step>D</step>
           <octave>5</octave>
           </pitch>
-        <duration>4</duration>
+        <duration>2</duration>
         <voice>1</voice>
-        <type>half</type>
+        <type>quarter</type>
         <stem>down</stem>
         <lyric number="1">
           <syllabic>single</syllabic>

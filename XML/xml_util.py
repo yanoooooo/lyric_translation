@@ -8,7 +8,8 @@ import jaconv
 import count_mora as cm
 import language_processing as lp
 
-notes = {"half":2, "quarter":4, "eighth":8, "16th": 16}
+types = {"half":2, "quarter":4, "eighth":8, "16th": 16}
+durations = {"half":4, "quarter":2, "eighth":1, "16th": 1}
 
 """
 # MusicXMLからモーラ数と原言語を抽出
@@ -67,7 +68,7 @@ def __less_mora(score, mora_list):
     note_type = []
 
     for s in score:
-        note_type.append(notes[s.find(".//type").text])
+        note_type.append(types[s.find(".//type").text])
         #print s.find(".//type").text
     
     # オリジナルと訳詞の差分モーラ
@@ -107,12 +108,12 @@ def __more_mora(measure, mora_list):
     # 小節ごとの音符を取得する
     # arr[[2,4,4], [4,4,4,4]....]
     for ms in measure:
-        types = []
+        tys = []
         for note in ms.iter("note"):
             for t in note.iter("type"):
-                types.append(notes[t.text])
+                tys.append(types[t.text])
                 #print t.text
-        note_type.append(types)
+        note_type.append(tys)
     
     # オリジナルと訳詞の差分モーラ
     sum_mora = 0
@@ -123,6 +124,7 @@ def __more_mora(measure, mora_list):
     # 配列内で１番大きい音符を分割していく
     # TODO 符点を考慮していない
     # TODO 先頭から愚直に分割している
+    add_note = 0 # 増やした音符を管理しないと、挿入時にずれる
     while diff_mora > 0:
         # 繰り返して最小の値を探す
         for ms_num in range(0, len(result)):
@@ -130,26 +132,29 @@ def __more_mora(measure, mora_list):
             score = result[ms_num].findall("note")
             for num in range(0, len(score)):
                 #print score[num].find(".//type").text
-                if score[num].find(".//type").text == notes.keys()[notes.values().index(mn)]:
+                if score[num].find(".//type").text == types.keys()[types.values().index(mn)]:
                     # 音符を挿入
                     node = copy.deepcopy(score[num])
-                    result[ms_num].insert(num, node)
+                    result[ms_num].insert(num+add_note, node)
                     # 音長を変更
-                    # TODO notesに値が無い場合はエラーで落ちる
-                    result[ms_num][num].find(".//type").text = notes.keys()[notes.values().index(mn*2)]
-                    result[ms_num][num+1].find(".//type").text = notes.keys()[notes.values().index(mn*2)]
+                    # TODO typesに値が無い場合はエラーで落ちる
+                    result[ms_num][num+add_note].find(".//type").text = types.keys()[types.values().index(mn*2)]
+                    result[ms_num][num+add_note+1].find(".//type").text = types.keys()[types.values().index(mn*2)]
+                    result[ms_num][num+add_note].find(".//duration").text = str(durations[types.keys()[types.values().index(mn*2)]])
+                    result[ms_num][num+add_note+1].find(".//duration").text = str(durations[types.keys()[types.values().index(mn*2)]])
                     diff_mora = diff_mora - 1
+                    add_note = add_note + 1
                 if diff_mora == 0:
                     break
             # note_typeの更新
             note_type = []
             for ms in measure:
-                types = []
+                tys = []
                 for note in ms.iter("note"):
                     for t in note.iter("type"):
-                        types.append(notes[t.text])
+                        tys.append(types[t.text])
                         #print t.text
-                note_type.append(types)
+                note_type.append(tys)
             
 
     #for s in result:

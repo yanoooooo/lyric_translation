@@ -49,7 +49,8 @@ if __name__ == '__main__':
     process = 0
     for num in range(0, len(mora_src_obj_om)):
         process = 0
-        l = mora_src_obj_om[num][2]
+        # 句読点は抜く
+        l = mora_src_obj_om[num][2].replace("、", "")
         lyrics_mora = mora_src_obj_om[num][3]
         while True:
             # 許容モーラ数になるまで文字数を減らす処理を続ける
@@ -95,7 +96,7 @@ if __name__ == '__main__':
                 process = process+1
             else:
                 break
-        #print("%s, 歌詞モーラ: %d, 許容モーラ: %d") % (l, lyrics_mora, mora_src_obj_om[num][0]+permission_mora)
+        print("%s, 歌詞モーラ: %d, 許容モーラ: %d") % (l, lyrics_mora, mora_src_obj_om[num][0]+permission_mora)
         lyrics.append((lyrics_mora, l))
 
     # MusicXMLの出力

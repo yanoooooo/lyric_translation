@@ -8,8 +8,8 @@ import jaconv
 import count_mora as cm
 import language_processing as lp
 
-types = {"half":2, "quarter":4, "eighth":8, "16th": 16}
-durations = {"half":4, "quarter":2, "eighth":1, "16th": 1}
+types = {"whole":1, "half":2, "quarter":4, "eighth":8, "16th": 16}
+durations = {"whole":4, "half":4, "quarter":2, "eighth":1, "16th": 1}
 
 """
 # MusicXMLからモーラ数と原言語を抽出
@@ -73,6 +73,7 @@ def __less_mora(score, mora_list):
     
     # オリジナルと訳詞の差分モーラ
     diff_mora = len(note_type) - len(result)
+    
     # 配列から１番短い音の次の音を伸ばし棒にする
     # TODO 愚直に最初に当たったやつからやってるのでもうちょっと音符考慮して…
     # TODO 符点が考慮できてない</dot>というタグがつく
@@ -101,7 +102,7 @@ def __less_mora(score, mora_list):
 @param mora_list arr["ロン", "ドン"....]
 return score
 """
-def __more_mora(measure, mora_list):
+def __more_mora(measure, mora_list, org_mora):
     result = measure[:]
     note_type = []
 
@@ -114,26 +115,38 @@ def __more_mora(measure, mora_list):
                 tys.append(types[t.text])
                 #print t.text
         note_type.append(tys)
+    #print note_type
     
     # オリジナルと訳詞の差分モーラ
-    sum_mora = 0
-    for nt in note_type:
-        sum_mora = sum_mora + len(nt)
-    diff_mora = len(mora_list) - sum_mora
-    
+    #sum_mora = 0
+    #for nt in note_type:
+    #    sum_mora = sum_mora + len(nt)
+    #diff_mora = len(mora_list) - sum_mora
+    diff_mora = len(mora_list) - org_mora
+
     # 配列内で１番大きい音符を分割していく
     # TODO 符点を考慮していない
     # TODO 先頭から愚直に分割している
-    add_note = 0 # 増やした音符を管理しないと、挿入時にずれる
     while diff_mora > 0:
         # 繰り返して最小の値を探す
         for ms_num in range(0, len(result)):
+            # 差分がないならループから抜ける
+            if diff_mora == 0:
+                break
+            add_note = 0 # 増やした音符を管理しないと、挿入時にずれる
             mn = min(note_type[ms_num])
             score = result[ms_num].findall("note")
             for num in range(0, len(score)):
-                #print score[num].find(".//type").text
+                # 差分がないならループから抜ける
+                if diff_mora == 0:
+                    break
+                # measureの中のタグがnoteじゃない場合は次に行く
+                if result[ms_num][num].tag != "note":
+                    continue
+                # 最小値の音符だった場合
                 if score[num].find(".//type").text == types.keys()[types.values().index(mn)]:
                     # 音符を挿入
+                    #print result[ms_num][num].tag
                     node = copy.deepcopy(score[num])
                     result[ms_num].insert(num+add_note, node)
                     # 音長を変更
@@ -144,8 +157,6 @@ def __more_mora(measure, mora_list):
                     result[ms_num][num+add_note+1].find(".//duration").text = str(durations[types.keys()[types.values().index(mn*2)]])
                     diff_mora = diff_mora - 1
                     add_note = add_note + 1
-                if diff_mora == 0:
-                    break
             # note_typeの更新
             note_type = []
             for ms in measure:
@@ -204,11 +215,13 @@ def create_xml(lyrics, output):
             # 該当するスコア部分の切り出し / lyricsを含むnoteを切り出す
             # オリジナルスコアのモーラ数とフレーズの部分を切りだす
             score = elem.findall(".//lyric/..")[current_mora:current_mora+org_lyrics[num][0]]
+            #print current_mora, current_mora+org_lyrics[num][0], len(score), len(elem.findall(".//lyric/.."))
             # オリジナルのモーラ数に歌詞数をあわせる
             mora_list = __less_mora(score, mora_list)
 
             # 要素の入れ替え
             for n in range(0, org_lyrics[num][0]):
+                #print n, mora_list[n]
                 elem.findall(".//lyric")[current_mora+n].find(".//text").text = jaconv.kata2hira(mora_list[n])
                 elem.findall(".//lyric")[current_mora+n].find(".//syllabic").text = "single"
                 #print elem.findall(".//lyric")[n].find(".//text").text
@@ -220,16 +233,16 @@ def create_xml(lyrics, output):
             # 該当するスコア部分の切り出し / lyricsを含むnoteを切り出す
             # オリジナルスコアのモーラ数とフレーズの部分を切りだす
             score = elem.findall(".//lyric/..")[current_mora:current_mora+org_lyrics[num][0]]
-
+            #print current_mora, current_mora+org_lyrics[num][0], len(score), len(elem.findall(".//lyric/.."))
             # 変更箇所は小節ごと切り出す
             modify_measure = []
             for measure in elem.findall(".//measure"):
                 for note in measure.findall("note"):
                     if note in score and not (measure in modify_measure):
                         modify_measure.append(measure)
-
             # 小節ごと渡して、音符を編集
-            new_elem = __more_mora(modify_measure, mora_list)
+            #print modify_measure
+            new_elem = __more_mora(modify_measure, mora_list, org_lyrics[num][0])
 
             # 切り出した小節を新しいものと入れ替え
             elem_num = 0
@@ -244,7 +257,7 @@ def create_xml(lyrics, output):
 
             # 要素の入れ替え
             for n in range(0, lyrics[num][0]):
-                # print elem.findall(".//lyric")[current_mora+n].find(".//text").text
+                #print elem.findall(".//lyric")[current_mora+n].find(".//text").text
                 elem.findall(".//lyric")[current_mora+n].find(".//text").text = jaconv.kata2hira(mora_list[n])
                 elem.findall(".//lyric")[current_mora+n].find(".//syllabic").text = "single"
 
@@ -265,5 +278,6 @@ def create_xml(lyrics, output):
 
 if __name__ == '__main__':
     #lyrics = [(7, "栗木の下で"), (7, "あなたと私"), (8, "幸せはでそう"), (7, "栗木の下で")]
-    lyrics = [(7, "ロンドン橋落ちる"), (3, "落ちる"), (3, "落ちる"), (7, "ロンドン橋落ちる"), (6, "マイフェアレディ")]
+    #lyrics = [(7, "ロンドン橋落ちる"), (3, "落ちる"), (3, "落ちる"), (7, "ロンドン橋落ちる"), (6, "マイフェアレディ")]
+    lyrics = [(16, "スパイダー水注ぎ口上がった"), (10, "洗い流されれれれ"), (14, "太陽出て乾燥し雨中"), (13, "スパイダー再び口行った")]
     create_xml(lyrics, "./test.xml")

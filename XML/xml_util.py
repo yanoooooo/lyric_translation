@@ -97,12 +97,163 @@ def __less_mora(score, mora_list):
     return result
 
 """
+# 曲の拍子と1小節の合計数を求める
+@param elem
+return time {"beat":0, "beat-type":0, "sum":0.0}
+"""
+def calc_note(elem):
+    result = {"beat":0, "beat-type":0, "sum":0.0}
+    time = elem.find(".//time")
+
+    result["beat"] = float(time.find("beats").text)
+    result["beat-type"] = float(time.find("beat-type").text)
+    result["sum"] = (4/float(time.find("beat-type").text)) * float(time.find("beats").text)
+
+    return result
+
+"""
 # オリジナルよりモーラ数が多い場合、音符を増やす
 @param score element.part.measure
 @param mora_list arr["ロン", "ドン"....]
 return score
 """
-def __more_mora(measure, mora_list, org_mora):
+def __more_mora(time, measure, mora_list, org_mora):
+    result = measure[:]
+    note_type = []
+
+    # 小節ごとの音符を取得する
+    # 符点を考慮する
+    # arr[[2,1,1], [1,1,0.5,0.5,1]....]
+    for ms in measure:
+        tys = []
+        n = 0.0
+        for note in ms.iter("note"):
+            for t in note.iter("type"):
+                if note.find("dot") != None:
+                    n = 4/float(types[t.text]) + (4/float(types[t.text]))/2
+                else:
+                    n = 4/float(types[t.text])
+                #tys.append((n, note.find(".//step").text, note.find(".//octave")))
+                tys.append(n)
+        note_type.append(tys)
+    print note_type
+    
+    # オリジナルと訳詞の差分モーラ
+    #sum_mora = 0
+    #for nt in note_type:
+    #    sum_mora = sum_mora + len(nt)
+    #diff_mora = len(mora_list) - sum_mora
+    diff_mora = len(mora_list) - org_mora
+    #print diff_mora
+
+    # 最大値を分割し、差分が無くなるまで処理を繰り返す
+    while diff_mora > 0:
+        # 最大値を持つ1番先頭の配列とindexを得る
+        measure = note_type[note_type.index(max(note_type))]
+        index = note_type.index(max(note_type))
+        #print measure, note_type.index(max(note_type))
+        # 最大値
+        mx = max(measure)
+        # 符点の場合は3で割れる
+        if (mx*1000) % 3 == 0:
+            # 2:1になるようにする
+            for num in range(0, len(measure)):
+                if measure[num] == mx:
+                    measure[num] = (mx/3)*2
+                    measure.insert(num+1, mx/3)
+                    diff_mora = diff_mora - 1
+                    break
+            note_type[index] = measure
+        # 符点でないとき
+        else:
+            # 半分に分割
+            for num in range(0, len(measure)):
+                if measure[num] == mx:
+                    measure[num] = mx/2
+                    measure.insert(num+1, mx/2)
+                    diff_mora = diff_mora - 1
+                    break
+            note_type[index] = measure
+
+    # note_typeの数とelem:measure(result)の数が揃っている前提でxmlを編集
+    for num in range(0, len(result)):
+        #print len(result[num].findall("note")), len(note_type[num])
+        # 小節内の音符数が違ったら増やす処理が必要
+        diff_note = len(note_type[num]) - len(result[num].findall("note"))
+        if diff_note > 0:
+            score = result[num].findall("note")
+            # noteを増やす
+            for dn in range(0, diff_note):
+                node = copy.deepcopy(score[0])
+                result[num].insert(num, node)
+            # noteの書き換え
+            for note_num in range(0, len(score)):
+                result[num][note_num].find(".//type").text = types.keys()[types.values().index(4 / note_type[num][note_num])]
+                result[num][note_num].find(".//duration").text = str(durations[types.keys()[types.values().index(4 / note_type[num][note_num])]])
+                # 符点ではない場合dotを削除
+                if (note_type[num][note_num]*1000) % 3 != 0:
+                    print result[num][note_num].find("dot")
+                    
+                    #print result.remove(rm)
+                    #result[num][note_num].remove(".//dot")
+
+    #for num in range(0, len(score)):
+    #    print score[num]
+
+    # 結果を返す
+
+    print note_type
+    return result
+
+    # 配列内で１番大きい音符を分割していく
+    # TODO 符点を考慮していない
+    # TODO 先頭から愚直に分割している
+    while diff_mora > 0:
+        # 繰り返して最小の値を探す
+        for ms_num in range(0, len(result)):
+            # 差分がないならループから抜ける
+            if diff_mora == 0:
+                break
+            add_note = 0 # 増やした音符を管理しないと、挿入時にずれる
+            mn = min(note_type[ms_num])
+            score = result[ms_num].findall("note")
+            for num in range(0, len(score)):
+                # 差分がないならループから抜ける
+                if diff_mora == 0:
+                    break
+                # measureの中のタグがnoteじゃない場合は次に行く
+                if result[ms_num][num].tag != "note":
+                    continue
+                # 最小値の音符だった場合
+                if score[num].find(".//type").text == types.keys()[types.values().index(mn)]:
+                    # 音符を挿入
+                    #print result[ms_num][num].tag
+                    node = copy.deepcopy(score[num])
+                    result[ms_num].insert(num+add_note, node)
+                    # 音長を変更
+                    # TODO typesに値が無い場合はエラーで落ちる
+                    result[ms_num][num+add_note].find(".//type").text = types.keys()[types.values().index(mn*2)]
+                    result[ms_num][num+add_note+1].find(".//type").text = types.keys()[types.values().index(mn*2)]
+                    result[ms_num][num+add_note].find(".//duration").text = str(durations[types.keys()[types.values().index(mn*2)]])
+                    result[ms_num][num+add_note+1].find(".//duration").text = str(durations[types.keys()[types.values().index(mn*2)]])
+                    diff_mora = diff_mora - 1
+                    add_note = add_note + 1
+            # note_typeの更新
+            note_type = []
+            for ms in measure:
+                tys = []
+                for note in ms.iter("note"):
+                    for t in note.iter("type"):
+                        tys.append(types[t.text])
+                        #print t.text
+                note_type.append(tys)
+            
+
+    #for s in result:
+    #    print s.find(".//type").text
+    return result
+
+def __more_mora_old(measure, mora_list, org_mora):
     result = measure[:]
     note_type = []
 
@@ -192,6 +343,9 @@ def create_xml(lyrics, output):
     tree = parse(filename)
     elem = tree.getroot()
 
+    # 1小節の音符数
+    time = calc_note(elem)
+
     # オリジナルと訳詞の配列のフレーズ数が同じであること前提
     current_mora = 0
     #org_sum_mora = 0
@@ -242,7 +396,7 @@ def create_xml(lyrics, output):
                         modify_measure.append(measure)
             # 小節ごと渡して、音符を編集
             #print modify_measure
-            new_elem = __more_mora(modify_measure, mora_list, org_lyrics[num][0])
+            new_elem = __more_mora(time, modify_measure, mora_list, org_lyrics[num][0])
 
             # 切り出した小節を新しいものと入れ替え
             elem_num = 0

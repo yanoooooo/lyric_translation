@@ -192,8 +192,11 @@ def __more_mora(time, measure, mora_list, org_mora):
                 result[num][note_num].find(".//duration").text = str(durations[types.keys()[types.values().index(4 / note_type[num][note_num])]])
                 # 符点ではない場合dotを削除
                 if (note_type[num][note_num]*1000) % 3 != 0:
-                    print result[num][note_num].find("dot")
-                    
+                    for n in result[num]:
+                        for child in n:
+                            if child == result[num][note_num].find("dot"):
+                                n.remove(result[num][note_num].find("dot"))
+                # TODO 符点の場合は符点を挿入
                     #print result.remove(rm)
                     #result[num][note_num].remove(".//dot")
 

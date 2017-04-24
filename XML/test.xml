@@ -177,7 +177,6 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <dot />
         <stem>down</stem>
         <lyric number="1">
           <syllabic>single</syllabic>
@@ -206,7 +205,6 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <dot />
         <stem>down</stem>
         <lyric number="1">
           <syllabic>single</syllabic>
@@ -295,7 +293,6 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <dot />
         <stem>down</stem>
         <lyric number="1">
           <syllabic>single</syllabic>
@@ -512,7 +509,6 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <dot />
         <stem>down</stem>
         <lyric number="1">
           <syllabic>single</syllabic>
@@ -527,7 +523,6 @@
         <duration>1</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <dot />
         <stem>down</stem>
         <lyric number="1">
           <syllabic>single</syllabic>
@@ -572,7 +567,6 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <dot />
         <stem>down</stem>
         <lyric number="1">
           <syllabic>single</syllabic>
@@ -587,7 +581,6 @@
         <duration>1</duration>
         <voice>1</voice>
         <type>eighth</type>
-        <dot />
         <stem>down</stem>
         <lyric number="1">
           <syllabic>single</syllabic>
@@ -692,7 +685,6 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>quarter</type>
-        <dot />
         <stem>down</stem>
         <lyric number="1">
           <syllabic>single</syllabic>

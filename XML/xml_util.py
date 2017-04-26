@@ -136,7 +136,7 @@ def __more_mora(time, measure, mora_list, org_mora):
                 #tys.append((n, note.find(".//step").text, note.find(".//octave")))
                 tys.append(n)
         note_type.append(tys)
-    print note_type
+    #print note_type
     
     # オリジナルと訳詞の差分モーラ
     #sum_mora = 0
@@ -187,7 +187,7 @@ def __more_mora(time, measure, mora_list, org_mora):
                 node = copy.deepcopy(score[0])
                 result[num].insert(num, node)
             # noteの書き換え
-            for note_num in range(0, len(score)):
+            for note_num in range(0, len(result[num])):
                 result[num][note_num].find(".//type").text = types.keys()[types.values().index(4 / note_type[num][note_num])]
                 result[num][note_num].find(".//duration").text = str(durations[types.keys()[types.values().index(4 / note_type[num][note_num])]])
                 # 符点ではない場合dotを削除
@@ -204,126 +204,7 @@ def __more_mora(time, measure, mora_list, org_mora):
     #    print score[num]
 
     # 結果を返す
-
-    print note_type
-    return result
-
-    # 配列内で１番大きい音符を分割していく
-    # TODO 符点を考慮していない
-    # TODO 先頭から愚直に分割している
-    while diff_mora > 0:
-        # 繰り返して最小の値を探す
-        for ms_num in range(0, len(result)):
-            # 差分がないならループから抜ける
-            if diff_mora == 0:
-                break
-            add_note = 0 # 増やした音符を管理しないと、挿入時にずれる
-            mn = min(note_type[ms_num])
-            score = result[ms_num].findall("note")
-            for num in range(0, len(score)):
-                # 差分がないならループから抜ける
-                if diff_mora == 0:
-                    break
-                # measureの中のタグがnoteじゃない場合は次に行く
-                if result[ms_num][num].tag != "note":
-                    continue
-                # 最小値の音符だった場合
-                if score[num].find(".//type").text == types.keys()[types.values().index(mn)]:
-                    # 音符を挿入
-                    #print result[ms_num][num].tag
-                    node = copy.deepcopy(score[num])
-                    result[ms_num].insert(num+add_note, node)
-                    # 音長を変更
-                    # TODO typesに値が無い場合はエラーで落ちる
-                    result[ms_num][num+add_note].find(".//type").text = types.keys()[types.values().index(mn*2)]
-                    result[ms_num][num+add_note+1].find(".//type").text = types.keys()[types.values().index(mn*2)]
-                    result[ms_num][num+add_note].find(".//duration").text = str(durations[types.keys()[types.values().index(mn*2)]])
-                    result[ms_num][num+add_note+1].find(".//duration").text = str(durations[types.keys()[types.values().index(mn*2)]])
-                    diff_mora = diff_mora - 1
-                    add_note = add_note + 1
-            # note_typeの更新
-            note_type = []
-            for ms in measure:
-                tys = []
-                for note in ms.iter("note"):
-                    for t in note.iter("type"):
-                        tys.append(types[t.text])
-                        #print t.text
-                note_type.append(tys)
-            
-
-    #for s in result:
-    #    print s.find(".//type").text
-    return result
-
-def __more_mora_old(measure, mora_list, org_mora):
-    result = measure[:]
-    note_type = []
-
-    # 小節ごとの音符を取得する
-    # arr[[2,4,4], [4,4,4,4]....]
-    for ms in measure:
-        tys = []
-        for note in ms.iter("note"):
-            for t in note.iter("type"):
-                tys.append(types[t.text])
-                #print t.text
-        note_type.append(tys)
     #print note_type
-    
-    # オリジナルと訳詞の差分モーラ
-    #sum_mora = 0
-    #for nt in note_type:
-    #    sum_mora = sum_mora + len(nt)
-    #diff_mora = len(mora_list) - sum_mora
-    diff_mora = len(mora_list) - org_mora
-
-    # 配列内で１番大きい音符を分割していく
-    # TODO 符点を考慮していない
-    # TODO 先頭から愚直に分割している
-    while diff_mora > 0:
-        # 繰り返して最小の値を探す
-        for ms_num in range(0, len(result)):
-            # 差分がないならループから抜ける
-            if diff_mora == 0:
-                break
-            add_note = 0 # 増やした音符を管理しないと、挿入時にずれる
-            mn = min(note_type[ms_num])
-            score = result[ms_num].findall("note")
-            for num in range(0, len(score)):
-                # 差分がないならループから抜ける
-                if diff_mora == 0:
-                    break
-                # measureの中のタグがnoteじゃない場合は次に行く
-                if result[ms_num][num].tag != "note":
-                    continue
-                # 最小値の音符だった場合
-                if score[num].find(".//type").text == types.keys()[types.values().index(mn)]:
-                    # 音符を挿入
-                    #print result[ms_num][num].tag
-                    node = copy.deepcopy(score[num])
-                    result[ms_num].insert(num+add_note, node)
-                    # 音長を変更
-                    # TODO typesに値が無い場合はエラーで落ちる
-                    result[ms_num][num+add_note].find(".//type").text = types.keys()[types.values().index(mn*2)]
-                    result[ms_num][num+add_note+1].find(".//type").text = types.keys()[types.values().index(mn*2)]
-                    result[ms_num][num+add_note].find(".//duration").text = str(durations[types.keys()[types.values().index(mn*2)]])
-                    result[ms_num][num+add_note+1].find(".//duration").text = str(durations[types.keys()[types.values().index(mn*2)]])
-                    diff_mora = diff_mora - 1
-                    add_note = add_note + 1
-            # note_typeの更新
-            note_type = []
-            for ms in measure:
-                tys = []
-                for note in ms.iter("note"):
-                    for t in note.iter("type"):
-                        tys.append(types[t.text])
-                        #print t.text
-                note_type.append(tys)
-            
-
-    #for s in result:
-    #    print s.find(".//type").text
     return result
 
 """

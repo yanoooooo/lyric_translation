@@ -45,7 +45,7 @@ def similar(word1, word2, filename):
 if __name__ == '__main__':
     piapro = ['datas/piapro/corpus.txt', 'datas/piapro/vector.model']
     translate = ['datas/translate/corpus.txt', 'datas/translate/vector.model']
-    wiki = ['../XML/datas/wiki/corpus.txt', '../XML/datas/wiki/vector.model']
+    wiki = ['./XML/datas/wiki/corpus.txt', './XML/datas/wiki/vector.model']
 
     datas = wiki
 

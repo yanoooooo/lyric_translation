@@ -22,6 +22,7 @@ cat ./jawiki_org.txt | sed -e 's/<.*>//g' | sed -e '/^ *$/d' > ./jawiki.txt
 sudo rm ./jawiki-latest-pages-articles.xml.bz2
 sudo rm ./jawiki_org.txt
 sudo rm -r ./wikiextractor
+sudo rm -r ./text
 
 # mecabで分かち書き
 # 環境によって辞書の位置が変わるので注意

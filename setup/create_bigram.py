@@ -31,7 +31,7 @@ def create_bigram(filename, output):
             dic[bigram] = dic.get(bigram, 0) + 1
             head_word[a[0]] = head_word.get(a[0], 0) + 1
             #file.write(a[0]+","+a[1]+"\n")
-            print("%s %s") % (a[0].decode("utf-8"), a[1].decode("utf-8"))
+            #print("%s %s") % (a[0].decode("utf-8"), a[1].decode("utf-8"))
     file = open(output, "w")
     for k,v in dic.items():
         # bigramと出現頻度の書き出し
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     test = ['datas/test/corpus.txt', 'datas/test/bigram.txt']
     piapro = ['datas/piapro/corpus.txt', 'datas/piapro/bigram.txt']
     translate = ['datas/translate/corpus.txt', 'datas/translate/bigram.txt']
-    wiki = ['../XML/datas/wiki/corpus.txt', '../XML/datas/wiki/bigram.txt']
+    wiki = ['./XML/datas/wiki/corpus.txt', './XML/datas/wiki/bigram.txt']
 
     datas = wiki
     create_bigram(datas[0], datas[1])

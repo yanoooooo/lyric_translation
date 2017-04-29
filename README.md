@@ -4,8 +4,8 @@
 ## setup
 * mecabのインストール
 * mecab-ipadic-neologdのインストール
-* wiki辞書の用意
 * 必要なpythonライブラリのインストール
+* wiki辞書の用意
 
 ### mecabのインストール
 mac, windows, linuxなど環境によって異なる
@@ -23,6 +23,12 @@ http://cantabilemusica.blogspot.jp/2017/01/mecab-ipadic-neologd.html
 以下のコマンドが通り、形態素解析ができれば問題ない。
 ```
 $ mecab -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd/
+```
+
+### 必要なpythonライブラリのインストール
+rootディレクトリで以下のコマンドを実行
+```
+$ sudo pip install -r requirements.txt
 ```
 
 ### wiki辞書の用意
@@ -44,9 +50,3 @@ input-buffer overflow. The line is split. use -b #SIZE option.
 * vector.model.wv.syn0.npy
 
 が出来ればOK
-
-### 必要なpythonライブラリのインストール
-rootディレクトリで以下のコマンドを実行
-```
-$ pip install -r requirements.txt
-```

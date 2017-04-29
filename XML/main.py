@@ -73,7 +73,8 @@ if __name__ == '__main__':
                     # 作成で今までの歌詞が失われるので保存しておく
                     lyrics_old = l
                     # 文章中の単語にtf-idf値を付与する
-                    ti = lp.tf_idf(l, resource)
+                    # WARN tf-idfだけは小節をモデルとして使う
+                    ti = lp.tf_idf(l, novel)
                     # TODO 同じtf-idfの値があったらどうするか？？？？？？？？？？
                     l = ti[0][0]
                     lyrics_mora = cm.kanji_count_mora(l)

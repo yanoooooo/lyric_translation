@@ -8,8 +8,8 @@ import jaconv
 import count_mora as cm
 import language_processing as lp
 
-types = {"whole":1, "half":2, "quarter":4, "eighth":8, "16th": 16}
-durations = {"whole":4, "half":4, "quarter":2, "eighth":1, "16th": 1}
+types = {"whole":1, "half":2, "quarter":4, "eighth":8, "16th": 16, "32nd": 32}
+durations = {"whole":4, "half":4, "quarter":2, "eighth":1, "16th": 1, "32nd": 1}
 
 """
 # MusicXMLからモーラ数と原言語を抽出
@@ -147,6 +147,11 @@ def __more_mora(time, measure, mora_list, org_mora):
     #print diff_mora
 
     # 最大値を分割し、差分が無くなるまで処理を繰り返す
+    # アウフタクトはいじるべきではない
+    upbeat = []
+    if sum(note_type[0]) != time["sum"]:
+        upbeat = note_type[0]
+        note_type.pop(0)
     while diff_mora > 0:
         # 最大値を持つ1番先頭の配列とindexを得る
         measure = note_type[note_type.index(max(note_type))]
@@ -174,6 +179,9 @@ def __more_mora(time, measure, mora_list, org_mora):
                     diff_mora = diff_mora - 1
                     break
             note_type[index] = measure
+    if len(upbeat) > 0:
+        note_type.insert(0, upbeat)
+    #print note_type
 
     # note_typeの数とelem:measure(result)の数が揃っている前提でxmlを編集
     for num in range(0, len(result)):
@@ -187,9 +195,10 @@ def __more_mora(time, measure, mora_list, org_mora):
                 node = copy.deepcopy(score[0])
                 result[num].insert(num, node)
             # noteの書き換え
-            for note_num in range(0, len(result[num])):
-                result[num][note_num].find(".//type").text = types.keys()[types.values().index(4 / note_type[num][note_num])]
-                result[num][note_num].find(".//duration").text = str(durations[types.keys()[types.values().index(4 / note_type[num][note_num])]])
+            for note_num in range(0, len(note_type[num])):
+                if result[num][note_num].find(".//type") != None:
+                    result[num][note_num].find(".//type").text = types.keys()[types.values().index(4 / note_type[num][note_num])]
+                    result[num][note_num].find(".//duration").text = str(durations[types.keys()[types.values().index(4 / note_type[num][note_num])]])
                 # 符点ではない場合dotを削除
                 if (note_type[num][note_num]*1000) % 3 != 0:
                     for n in result[num]:
@@ -204,7 +213,6 @@ def __more_mora(time, measure, mora_list, org_mora):
     #    print score[num]
 
     # 結果を返す
-    #print note_type
     return result
 
 """
@@ -317,5 +325,6 @@ def create_xml(lyrics, output):
 if __name__ == '__main__':
     #lyrics = [(7, "栗木の下で"), (7, "あなたと私"), (8, "幸せはでそう"), (7, "栗木の下で")]
     #lyrics = [(7, "ロンドン橋落ちる"), (3, "落ちる"), (3, "落ちる"), (7, "ロンドン橋落ちる"), (6, "マイフェアレディ")]
-    lyrics = [(16, "スパイダー水注ぎ口上がった"), (10, "洗い流されれれれ"), (14, "太陽出て乾燥し雨中"), (13, "スパイダー再び口行った")]
+    #lyrics = [(16, "スパイダー水注ぎ口上がった"), (10, "洗い流されれれれ"), (14, "太陽出て乾燥し雨中"), (13, "スパイダー再び口行った")]
+    lyrics = [(25, "どのよう甘い響き私ようなそは救われました"), (4, "失わ"), (2, "発見"), (4, "盲目")]
     create_xml(lyrics, "./test.xml")

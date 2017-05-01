@@ -1,0 +1,7 @@
+gensim==0.13.4.1
+nltk==3.2.2
+jaconv==0.2.0
+lxml==3.6.4
+mecab-python==0.996
+microsofttranslator==0.7
+scikit-learn==0.18.1

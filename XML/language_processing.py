@@ -3,6 +3,8 @@
 import MeCab
 import nltk
 
+dic_path = " -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd"
+
 """
 # 与えられた漢字混じりの文章をカタカナにして返す
 # 助詞が連続するなどの文章としておかしなものはここで弾く
@@ -10,7 +12,7 @@ import nltk
 """
 def kanji2katakana(sentence, particle=False):
     # 漢字をの読みを取得
-    mt = MeCab.Tagger(' -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd')
+    mt = MeCab.Tagger(dic_path)
     res = mt.parseToNode(sentence)
     
     result = ""
@@ -44,7 +46,7 @@ def kanji2katakana(sentence, particle=False):
 # ですます調を削除
 # ます、の前の独立した動詞まで遡り、その原形を取得する
 def delete_honolific(sentence):
-    mt = MeCab.Tagger(' -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd')
+    mt = MeCab.Tagger(dic_path)
     res = mt.parseToNode(sentence)
 
     # [(要素, 品詞, 詳細な品詞, 原形),("落ち", 動詞, 自立, "落ちる")....]
@@ -88,7 +90,7 @@ def delete_honolific(sentence):
 
 # 「だ」の断定を削除
 def delete_da(sentence):
-    mt = MeCab.Tagger(' -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd')
+    mt = MeCab.Tagger(dic_path)
     res = mt.parseToNode(sentence)
 
     # [(要素, 品詞, 詳細な品詞, 原形),("落ち", 動詞, 自立, "落ちる")....]
@@ -115,7 +117,7 @@ def delete_da(sentence):
 
 # 助詞を省略
 def delete_particle(sentence):
-    mt = MeCab.Tagger(' -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd')
+    mt = MeCab.Tagger(dic_path)
     res = mt.parseToNode(sentence)
 
     # [(要素, 品詞, 詳細な品詞, 原形),("落ち", 動詞, 自立, "落ちる")....]
@@ -151,7 +153,7 @@ def tf_idf(sentence, resources):
     line = data.split("\n")
 
     # 与えられた文章を形態素解析
-    mt = MeCab.Tagger(' -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd')
+    mt = MeCab.Tagger(dic_path)
     res = mt.parseToNode(sentence)
 
     elements = []

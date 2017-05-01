@@ -9,6 +9,8 @@ from gensim.models import word2vec
 import count_mora as cm
 import language_processing as lp
 
+dic_path = " -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd"
+
 class LyricsUtil:
     def __init__(self, resources):
         # モデルの読み込み
@@ -201,7 +203,7 @@ class LyricsUtil:
     def __mean_cos_similarity(self, translation, lyrics_arr):
         result = []
         # 機械翻訳文から名詞と動詞の原形を抜き出す
-        mt = MeCab.Tagger(' -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd')
+        mt = MeCab.Tagger(dic_path)
         res = mt.parseToNode(translation)
 
         translation_words = []
@@ -264,7 +266,7 @@ class LyricsUtil:
         file.close()
         dic = data.split("\n")
 
-        mt = MeCab.Tagger(' -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd')
+        mt = MeCab.Tagger(dic_path)
         for lyrics in lyrics_arr:
             res = mt.parseToNode(lyrics[0])
 
@@ -317,7 +319,6 @@ class LyricsUtil:
         # 候補となる単語を渡し、モーラを指定し、モーラと一致する歌詞候補のリストを生成
         # TODO 助詞がない歌詞っぽい文章も作れるようにする
         # TODO 言語モデルの確率をちゃんと求める
-
         
         #vowel = [("a", 3),("a", 5)]
         vowel = [("a", 5)]

@@ -106,9 +106,23 @@ def delete_da(sentence):
     elements.pop()
 
     result = ""
+
+    # 「だ」の断定表現
     if elements[-1][0] == "だ" and elements[-1][1] == "助動詞":
         for a in elements[:-1]:
             result = result + a[0]
+
+    # 「だった」の断定表現
+    if elements[-2][0] == "だっ" and elements[-2][1] == "助動詞":
+        if elements[-1][0] == "た" and elements[-1][1] == "助動詞":
+            for a in elements[:-2]:
+                result = result + a[0]
+
+    #「である」の断定表現
+    if elements[-2][0] == "で" and elements[-2][1] == "助動詞":
+        if elements[-1][0] == "ある" and elements[-1][1] == "助動詞":
+            for a in elements[:-2]:
+                result = result + a[0]
 
     if result == "":
         result = sentence
@@ -188,7 +202,7 @@ def tf_idf(sentence, resources):
 
 if __name__ == '__main__':
     arr = [
-        "さまざまなマニュアル本に、恋を成功させるためのテクニックが紹介されています",
+        "さまざまなマニュアル本に、恋を成功させるためのテクニックが紹介されていました",
         "しかし、それは恋の達人たちの必殺技であることが多く、タイミングや雰囲気、しぐさや口調といった様々な要素を考慮する必要があります",
         "そもそもモテ子の恋の駆け引きは、自分に合った素敵な彼を選別したり、彼との恋にエッセンスを加えたりする手段なのです",
         "でも、その駆け引きには、タイミングと経験が必要です",
@@ -201,13 +215,15 @@ if __name__ == '__main__':
         "実は、上手に気持ちを伝え、甘え上手である人は、既に男運の良いモテ子だともいえます。だから、これはモテ子への近道でもあるのです"
     ]
 
-    ti = tf_idf("ある我々あなたと私両方座る", {"corpus": "datas/novel/corpus.txt"})
+    #ti = tf_idf("ある我々あなたと私両方座る", {"corpus": "datas/novel/corpus.txt"})
 
-    for a in ti:
-        print a[0], a[1]
+    #for a in ti:
+    #    print a[0], a[1]
 
     #for a in arr:
-    #    delete_particle(a)
+    #    print delete_honolific(a)
+
+    print delete_da("最高である")
 
     #delete_particle("ロンドン橋が必要だ")
 

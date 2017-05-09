@@ -10,8 +10,8 @@ from microsofttranslator import Translator
 def translate(mora_src):
     result = []
     # アプリケーション名とキーの設定
-    #translator = Translator('TranslateAppOnRS', 'KiRTM60FqU2CLMDrQhVdd3yeicWSztHtLiDx5JRIavA=')
-    translator = Translator('score_translation', 'AnG5Mp3zZZHWk3qjuvI5nt0jVBuwJrrPi6SUpmPhFV0=')
+    translator = Translator('TranslateAppOnRS', 'KiRTM60FqU2CLMDrQhVdd3yeicWSztHtLiDx5JRIavA=')
+    #translator = Translator('score_translation', 'AnG5Mp3zZZHWk3qjuvI5nt0jVBuwJrrPi6SUpmPhFV0=')
 
     for ms in mora_src:
         obj_ln = translator.translate(ms[1], "ja")

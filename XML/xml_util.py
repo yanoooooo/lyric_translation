@@ -123,7 +123,7 @@ def __more_mora(time, measure, mora_list, org_mora):
 
     # 小節ごとの音符を取得する
     # 符点を考慮する
-    # arr[[2,1,1], [1,1,0.5,0.5,1]....]
+    # arr[[(2.0, <pitch>), (1.0, <pitch>), (1.0, <pitch>)], [(1.5, <pitch>), (1.5, <pitch>), (1.0, <pitch>)]....]
     for ms in measure:
         tys = []
         n = 0.0
@@ -133,10 +133,10 @@ def __more_mora(time, measure, mora_list, org_mora):
                     n = 4/float(types[t.text]) + (4/float(types[t.text]))/2
                 else:
                     n = 4/float(types[t.text])
-                #tys.append((n, note.find(".//step").text, note.find(".//octave")))
+                #tys.append((n, note.find(".//pitch")))
                 tys.append(n)
         note_type.append(tys)
-    #print note_type
+    print note_type
     
     # オリジナルと訳詞の差分モーラ
     #sum_mora = 0
@@ -179,9 +179,10 @@ def __more_mora(time, measure, mora_list, org_mora):
                     diff_mora = diff_mora - 1
                     break
             note_type[index] = measure
+    # アウフタクトを先頭に挿入
     if len(upbeat) > 0:
         note_type.insert(0, upbeat)
-    #print note_type
+    print note_type
 
     # note_typeの数とelem:measure(result)の数が揃っている前提でxmlを編集
     for num in range(0, len(result)):
@@ -324,7 +325,7 @@ def create_xml(lyrics, output):
 
 if __name__ == '__main__':
     #lyrics = [(7, "栗木の下で"), (7, "あなたと私"), (8, "幸せはでそう"), (7, "栗木の下で")]
-    #lyrics = [(7, "ロンドン橋落ちる"), (3, "落ちる"), (3, "落ちる"), (7, "ロンドン橋落ちる"), (6, "マイフェアレディ")]
+    lyrics = [(7, "ロンドン橋落ちる"), (3, "落ちる"), (3, "落ちる"), (7, "ロンドン橋落ちる"), (6, "マイフェアレディ")]
     #lyrics = [(16, "スパイダー水注ぎ口上がった"), (10, "洗い流されれれれ"), (14, "太陽出て乾燥し雨中"), (13, "スパイダー再び口行った")]
-    lyrics = [(25, "どのよう甘い響き私ようなそは救われました"), (4, "失わ"), (2, "発見"), (4, "盲目")]
+    #lyrics = [(25, "どのよう甘い響き私ようなそは救われました"), (4, "失わ"), (2, "発見"), (4, "盲目")]
     create_xml(lyrics, "./test.xml")

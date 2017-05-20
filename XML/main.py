@@ -10,7 +10,7 @@ import lyrics_util
 # 言語資源
 novel = {"corpus": "datas/novel/corpus.txt", "bigram": "datas/novel/bigram.txt", "vector": "datas/novel/vector.model"}
 wiki = {"corpus": "datas/wiki/corpus.txt", "bigram": "datas/wiki/bigram.txt", "vector": "datas/wiki/vector.model"}
-resource = wiki
+resource = novel
 
 permission_mora = 0 # 溢れるのを許容するモーラ数
 reduce_mora = 3 #減るのを許容するモーラ数

@@ -19,7 +19,7 @@ for epoch in range(epoch_num):
 
     # 学習を実施
     model.learn(True)
-    modelfile = "en2ja-" + str(epoch) + ".model"
+    modelfile = "./model/en2ja-" + str(epoch) + ".model"
     model.save_model(modelfile)
 
     elapsed_time = time.time() - start_time

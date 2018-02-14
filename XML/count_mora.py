@@ -11,13 +11,16 @@ lst = ["ッ", "ャ", "ュ", "ョ", "ン", "ァ", "ィ", "ゥ", "ェ", "ォ"]
 @return int, arr[]
 """
 def count_mora(sentence):
-    result = len(sentence)/3
-    t = unicode(sentence.decode('utf-8'))
+    #result = len(sentence)/3
+    #t = unicode(sentence.decode('utf-8'))
+    result = len(sentence)
+    t = sentence
 
     # モーラ数を数える
     for num in range(0, len(t)):
         for a in lst:
-            if a in t[num].encode("utf-8"):
+            #if a in t[num].encode("utf-8"):
+            if a in t[num]:
                 result = result - 1
 
     return result
@@ -29,12 +32,14 @@ def count_mora(sentence):
 """
 def create_mora_list(sentence):
     result = []
-    t = unicode(sentence.decode('utf-8'))
+    #t = unicode(sentence.decode('utf-8'))
+    t = sentence
 
     mora_num = 0
     # モーラリストを作る
     for a in range(0, len(t)):
-        if t[a].encode("utf-8") in lst:
+        #if t[a].encode("utf-8") in lst:
+        if t[a] in lst:
             result[mora_num-1] = result[mora_num-1]+t[a]
         else:
             result.append(t[a])
@@ -46,6 +51,8 @@ def create_mora_list(sentence):
 
 # @param sentence str
 def kanji_count_mora(sentence):
+    if(isinstance(sentence, bytes)):
+        sentence = sentence.decode()
     katakana = lp.kanji2katakana(sentence)
     result = count_mora(katakana)
 

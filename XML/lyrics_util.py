@@ -17,7 +17,7 @@ class LyricsUtil:
         self.vector =  word2vec.Word2Vec.load(resources["vector"])
         
         # bigramの作成
-        print "creating bigrams...."
+        print("creating bigrams....")
         self.bigrams = self.__create_bigram(resources)
 
     """
@@ -30,7 +30,7 @@ class LyricsUtil:
         for row in open(resources["bigram"]).readlines():
             row = row.strip().split(',')
             result.append(tuple(row))
-        print "DONE...%d objects created" % len(result)
+        print("DONE...%d objects created" % len(result))
 
         return result
 
@@ -42,7 +42,7 @@ class LyricsUtil:
         search = []
         
         # 渡した単語と前方が一致するものをbigramsから返す
-        print "searching bigrams...."
+        print("searching bigrams....")
         candidate = self.__search_bigram(word)
         
         # モーラ数を調べ、結果と再検索のリストを作成
@@ -66,7 +66,7 @@ class LyricsUtil:
             re_result, re_search = self.__search_candidate_from_mora(re_candidate, mora, vowel)
             result.extend(re_result)
             search.extend(re_search)
-            print "loop: %d, result_length: %d, search_length: %d" % (num, len(result), len(search))
+            print("loop: %d, result_length: %d, search_length: %d" % (num, len(result), len(search)))
             num = num+1
 
         return result
@@ -96,13 +96,15 @@ class LyricsUtil:
         threadshold = 0.000011099
 
         for a in candidate:
-            sentence = unicode(a[2].decode("utf-8"))
+            #sentence = unicode(a[2].decode("utf-8"))
+            sentence = a[2]
             # 与えられたbi-gramの候補(漢字混じり)がモーラ数より大きければその時点で次に行く
             if len(sentence) > mora:
                 continue
 
             # 漢字混じりの文章をカタカナに変換
-            katakana = lp.kanji2katakana(sentence.encode("utf-8"), True)
+            #katakana = lp.kanji2katakana(sentence.encode("utf-8"), True)
+            katakana = lp.kanji2katakana(sentence, True)
             
             if katakana == False:
                 continue
@@ -167,7 +169,8 @@ class LyricsUtil:
         # TODO 小文字やンが使われていたら、1モーラとするべきかの判定が必要(リズム等を考慮する)
         # TODO 拗音とかがまざるとズレてるので注意
         # ex. i,6 :バラの研究
-        t = unicode(katakana.decode('utf-8'))
+        #t = (katakana.decode('utf-8'))
+        t = katakana
         for v in vowel:
             trim = vowel_trim[v[0]]
             l_trim = lowcase_trim[v[0]]
@@ -179,7 +182,8 @@ class LyricsUtil:
                 if len(t) == mora_num:
                     # 与えられたtextの文字数とモーラ数が一致
                     # 拗音と促音、撥音を含まないと判断
-                    if not re.match(trim, t[v[1]-1].encode("utf-8")):
+                    #if not re.match(trim, t[v[1]-1].encode("utf-8")):
+                    if not re.match(trim, t[v[1]-1]):
                         return False
                 else:
                     # モーラ数が指定されたモーラ位置より多ければ実行
@@ -188,10 +192,12 @@ class LyricsUtil:
                         #print mora_list[v[1]-1]
                         # 拗音 / 促音 / 撥音を含む場合
                         # 拗音
-                        if not re.match(l_trim, mora_list[v[1]-1].encode("utf-8")):
+                        #if not re.match(l_trim, mora_list[v[1]-1].encode("utf-8")):
+                        if not re.match(l_trim, mora_list[v[1]-1]):
                             return False
                             # 促音と撥音
-                        if not re.match(trim, mora_list[v[1]-1].encode("utf-8")):
+                        #if not re.match(trim, mora_list[v[1]-1].encode("utf-8")):
+                        if not re.match(trim, mora_list[v[1]-1]):
                             return False
         return True
 
@@ -233,7 +239,8 @@ class LyricsUtil:
                     # modelに単語がない場合KeyErrorになる
                     #print ly_word, trs_word
                     try:
-                        cos = self.vector.similarity(unicode(ly_word, "utf-8"), unicode(trs_word, "utf-8"))
+                        #cos = self.vector.similarity(unicode(ly_word, "utf-8"), unicode(trs_word, "utf-8"))
+                        cos = self.vector.similarity(ly_word, trs_word)
                     except KeyError:
                         #print ly_word, trs_word
                         cos = 0.0
@@ -287,9 +294,9 @@ class LyricsUtil:
                 if v == 1:
                     num = num + 1
                 #print k,v
-
-            fl = float(num)/float(len(target_wrod))
-            result.append((lyrics[0], lyrics[1], lyrics[2], fl))
+            if len(target_wrod) != 0:
+                fl = float(num)/float(len(target_wrod))
+                result.append((lyrics[0], lyrics[1], lyrics[2], fl))
 
         return result
 
@@ -323,7 +330,7 @@ class LyricsUtil:
         #vowel = [("a", 3),("a", 5)]
         vowel = [("a", 5)]
         
-        print "creating candidate list...."
+        print("creating candidate list....")
         candidate_list = self.__create_candidate_list(word, mora, vowel)
         
         # 候補のリストから、翻訳文と生成文を与え翻訳モデルのスコアを計算する
@@ -348,8 +355,8 @@ class LyricsUtil:
 
         # 歌詞候補の一覧
         for a in candidate_list:
-            print a[0], a[1], a[2], a[3], a[4]
-        print "%d candidate" % len(candidate_list)
+            print(a[0], a[1], a[2], a[3], a[4])
+        print("%d candidate" % len(candidate_list))
 
         if len(candidate_list) > 0:
             return candidate_list[-1][0]
@@ -365,9 +372,9 @@ if __name__ == '__main__':
     # 歌詞の作成
     #vowel = [("a", 3),("a", 5)]
     vowel = []
-    result = lu.create_lyrics("幸せ", "幸せな家庭", 8, vowel)
+    result = lu.create_lyrics("愛", "彼女はかつて私の本当の愛でした", 8, vowel)
 
-    print result
+    print(result)
 
     #tf = match_text_vowel("バラノケンキュウ", [("i", 6)])
     #print tf

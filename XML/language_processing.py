@@ -13,6 +13,7 @@ dic_path = " -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd"
 def kanji2katakana(sentence, particle=False):
     # 漢字をの読みを取得
     mt = MeCab.Tagger(dic_path)
+    mt.parse('')
     res = mt.parseToNode(sentence)
     
     result = ""
@@ -41,12 +42,14 @@ def kanji2katakana(sentence, particle=False):
         res = res.next
 
     result = result.replace("*", "")
+
     return result
 
 # ですます調を削除
 # ます、の前の独立した動詞まで遡り、その原形を取得する
 def delete_honolific(sentence):
     mt = MeCab.Tagger(dic_path)
+    mt.parse('')
     res = mt.parseToNode(sentence)
 
     # [(要素, 品詞, 詳細な品詞, 原形),("落ち", 動詞, 自立, "落ちる")....]
@@ -132,6 +135,7 @@ def delete_da(sentence):
 # 助詞を省略
 def delete_particle(sentence):
     mt = MeCab.Tagger(dic_path)
+    mt.parse('')
     res = mt.parseToNode(sentence)
 
     # [(要素, 品詞, 詳細な品詞, 原形),("落ち", 動詞, 自立, "落ちる")....]
@@ -161,23 +165,25 @@ def tf_idf(sentence, resources):
     file = open(filename)
     data = file.read()
     file.close()
-    print "Finished reading file...."
+    print("Finished reading file....")
 
-    data = data.decode("utf-8")
+    #data = data.decode("utf-8")
     line = data.split("\n")
 
     # 与えられた文章を形態素解析
     mt = MeCab.Tagger(dic_path)
+    mt.parse('')
     res = mt.parseToNode(sentence)
 
     elements = []
     while res:
         ft = res.feature.split(",")
-        elements.append(res.surface.decode("utf-8"))
+        #elements.append(res.surface.decode("utf-8"))
+        elements.append(res.surface)
         #print res.surface, res.feature
         res = res.next
 
-    print "Finished morphological analysis...."
+    print("Finished morphological analysis....")
 
     elements = elements[1:-1]
 
@@ -187,13 +193,13 @@ def tf_idf(sentence, resources):
     for l in line:
         docs.append(l.split(" "))
 
-    print "Finished spliting word...."
+    print("Finished spliting word....")
 
     collection = nltk.TextCollection(docs)
     uniqTerms = list(set(collection))
 
     for term in elements:
-        # print "%s : %f" % (term, collection.tf_idf(term, elements))
+        #print("%s : %f" % (term, collection.tf_idf(term, elements)))
         result.append((term.encode("utf-8"), collection.tf_idf(term, elements)))
 
     result = sorted(result, reverse=True, key=lambda x: float(x[1]))
@@ -215,15 +221,15 @@ if __name__ == '__main__':
         "実は、上手に気持ちを伝え、甘え上手である人は、既に男運の良いモテ子だともいえます。だから、これはモテ子への近道でもあるのです"
     ]
 
-    #ti = tf_idf("ある我々あなたと私両方座る", {"corpus": "datas/novel/corpus.txt"})
+    ti = tf_idf("彼女はかつて私の本当の愛、でした", {"corpus": "datas/novel/corpus.txt"})
 
-    #for a in ti:
-    #    print a[0], a[1]
+    for a in ti:
+        print(a[0], a[1])
 
     #for a in arr:
     #    print delete_honolific(a)
 
-    print delete_da("最高である")
+    #print delete_da("最高である")
 
     #delete_particle("ロンドン橋が必要だ")
 

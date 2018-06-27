@@ -46,7 +46,7 @@ def __parse_xml(filename):
 def read_xml():
     argvs = sys.argv
     if len(argvs) != 2:
-        print "Usage: input MusicXML file name"
+        print("Usage: input MusicXML file name")
         quit()
 
     # MusicXML file
@@ -267,7 +267,7 @@ def __more_mora(time, measure, mora_list, org_mora):
 def create_xml(lyrics, output):
     argvs = sys.argv
     if len(argvs) != 2:
-        print "Usage: input MusicXML file name"
+        print("Usage: input MusicXML file name")
         quit()
 
     # MusicXML fil
@@ -293,7 +293,7 @@ def create_xml(lyrics, output):
 
         # ----------------オリジナルと翻訳のモーラ数が同じ----------------
         if org_lyrics[num][0] == lyrics[num][0]:
-            print "============ same =============="
+            print("============ same ==============")
             # 要素の入れ替え
             for n in range(0, lyrics[num][0]):
                 #print n, mora_list[n]
@@ -304,7 +304,7 @@ def create_xml(lyrics, output):
 
         # ----------------オリジナルより翻訳のモーラ数が少ない----------------
         if org_lyrics[num][0] > lyrics[num][0]:
-            print "============ less =============="
+            print("============ less ==============")
             # 該当するスコア部分の切り出し / lyricsを含むnoteを切り出す
             # オリジナルスコアのモーラ数とフレーズの部分を切りだす
             score = elem.findall(".//lyric/..")[current_mora:current_mora+org_lyrics[num][0]]
@@ -322,7 +322,7 @@ def create_xml(lyrics, output):
 
         # ----------------オリジナルより翻訳のモーラ数が多い----------------
         if org_lyrics[num][0] < lyrics[num][0]:
-            print "============ more =============="
+            print("============ more ==============")
             # 該当するスコア部分の切り出し / lyricsを含むnoteを切り出す
             # オリジナルスコアのモーラ数とフレーズの部分を切りだす
             score = elem.findall(".//lyric/..")[current_mora:current_mora+org_lyrics[num][0]]
@@ -362,11 +362,11 @@ def create_xml(lyrics, output):
     tree.write(output)
 
     for a in lyrics:
-        print a[0], a[1]
+        print(a[0], a[1])
 
     for b in org_lyrics:
-       print b[0], b[1]
-    print "Done!"
+       print(b[0], b[1])
+    print("Done!")
 
 
 if __name__ == '__main__':

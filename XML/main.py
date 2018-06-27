@@ -32,12 +32,12 @@ if __name__ == '__main__':
     #    print a[1], a[2]
 
     # スカボロー・フェア
-    #mora_src_obj = [
-    #    (9, "Are you going to Scarborough Fair", "あなたはスカボローフェアに行くのですか"),
-    #    (8, "Parsley, sage, rosemary and thyme", "パセリ、セージ、ローズマリー、タイム"),
-    #    (11, "Remember me to one who lives there", "そこに住んでいる人に私を覚えてください"),
-    #   (8, "For she once was a true love of mine", "彼女はかつて私の本当の愛でした")
-    #]
+    mora_src_obj = [
+       (9, "Are you going to Scarborough Fair", "あなたはスカボローフェアに行くのですか"),
+       (8, "Parsley, sage, rosemary and thyme", "パセリ、セージ、ローズマリー、タイム"),
+       (11, "Remember me to one who lives there", "そこに住んでいる人に私を覚えてください"),
+      (8, "For she once was a true love of mine", "彼女はかつて私の本当の愛でした")
+    ]
 
     # Lavender's Blue
     #mora_src_obj = [
@@ -48,12 +48,12 @@ if __name__ == '__main__':
     #]
 
     # I will give my love an apple.
-    mora_src_obj = [
-        (14, "I will give my love an apple without any core", "私は私の愛をコアなしでリンゴにします"),
-        (13, "I will give my love a house without any door", "私はドアを持たずに私の愛を家に与えます"),
-        (11, "I will give my love a place where in he may be", "私は自分の愛を彼がいる場所に与えます"),
-        (11, "And he may unlock it without any key", "そして彼は鍵なしでそれをロック解除することができる")
-    ]
+    # mora_src_obj = [
+    #     (14, "I will give my love an apple without any core", "私は私の愛をコアなしでリンゴにします"),
+    #     (13, "I will give my love a house without any door", "私はドアを持たずに私の愛を家に与えます"),
+    #     (11, "I will give my love a place where in he may be", "私は自分の愛を彼がいる場所に与えます"),
+    #     (11, "And he may unlock it without any key", "そして彼は鍵なしでそれをロック解除することができる")
+    # ]
 
     # 翻訳した日本語のモーラ数を数える
     # [(mora_num, "lyrics", "翻訳", obj_mora), (mora_num, "lyrics", "翻訳", obj_mora).....]
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     #    print("%d: %s") % (a[0], a[1])
     #    print("%d: %s") % (a[3], a[2])
     #    print "------"
-    
+
     # 翻訳のモーラが指定数以上の場合は、助詞を抜く等の操作を試みる
     # lyrics = arr[("lyrics", lyrics_mora), ("lyrics", lyrics_mora)...]
     lyrics = []
@@ -128,4 +128,3 @@ if __name__ == '__main__':
 
     # MusicXMLの出力
     #rx.create_xml(lyrics, output_xml)
-

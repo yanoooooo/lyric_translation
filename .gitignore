@@ -1,5 +1,9 @@
+2016_INTERACTION/calc_word_num/data/*
 2016_INTERACTION/part_translation/data/*
 2017_JSAI/datas/*
-XML/datas/wiki/*
+2017_JSAI/*.txt
+machine_translation/datas/*
+XML/datas/*
 .DS_Store
 *.pyc
+*/data/*

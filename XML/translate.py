@@ -33,7 +33,7 @@ def translate(mora_src):
         obj_ln = obj_ln.replace("・", "")
         # 英語が残ってしまった場合は削除
         obj_ln = re.sub(r'[a-zA-Z]+', "", obj_ln)
-        print obj_ln
+        print(obj_ln)
         result.append((ms[0], ms[1], obj_ln))
     
     return result

@@ -1,9 +1,9 @@
 #coding:utf-8
 #対応確率を見やすくするためのプログラム
 
-src_id_filename = "./data/giza/116-11-14.011307.aynishim.trn.src.vcb"
-trg_id_filename = "./data/giza/116-11-14.011307.aynishim.trn.trg.vcb"
-prob_data_filename = "./data/giza/116-11-14.011307.aynishim.t3.final"
+src_id_filename = "./data/giza/src.trn.src.vcb"
+trg_id_filename = "./data/giza/tgt.trn.trg.vcb"
+prob_data_filename = "./data/giza/prb.t3.final"
 filename = "ttable_alt.txt"
 src_ids = {}
 trg_ids = {}

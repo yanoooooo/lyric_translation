@@ -16,7 +16,7 @@ corpusname = "./datas/piapro/corpus.txt"
 # ------------------------ URLリスト ------------------------
 def create_url_list():
     target_url = "http://piapro.jp/text/?categoryId=7&page="
-    
+
 
     lyrics_url_list = []
 
@@ -56,7 +56,7 @@ def create_lyrics_corpus():
         target_url = "http://piapro.jp" + a.strip()
         target_html = requests.get(target_url).text
         root = lxml.html.fromstring(target_html)
-        
+
         file.write(root.cssselect('#_txt_main')[0].text_content().encode("utf-8")+"\n")
         #print root.cssselect('#_txt_main')[0].text_content()
         time.sleep(2)
